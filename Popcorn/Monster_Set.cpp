@@ -1,25 +1,24 @@
-п»ї#include "Monster_Set.h"
+#include "Monster_Set.h"
 
 // AsMonster_Set
 //------------------------------------------------------------------------------------------------------------
 AsMonster_Set::~AsMonster_Set()
 {
-	for (auto *curr_monster : Monsters)
-		delete curr_monster;
+	for (auto *monster : Monsters)
+		delete monster;
 
 	Monsters.erase(Monsters.begin(), Monsters.end() );
 }
 //------------------------------------------------------------------------------------------------------------
 AsMonster_Set::AsMonster_Set()
-: Monster_Set_State(EMonster_Set_State::Idle), Is_Frozen(false), Current_Gate(0),
-  Max_Alive_Monsters_Count(0), Border(0)
+: Monster_Set_State(EMonster_Set_State::Idle), Is_Frozen(false), Current_Gate_Index(-1), Max_Alive_Monsters_Count(0), Border(0)
 {
 }
 //------------------------------------------------------------------------------------------------------------
 bool AsMonster_Set::Check_Hit(double next_x_pos, double next_y_pos, ABall_Object *ball)
 {
-	for (auto *curr_monster : Monsters)
-		if (curr_monster->Check_Hit(next_x_pos, next_y_pos, ball) )
+	for (auto *monster : Monsters)
+		if (monster->Check_Hit(next_x_pos, next_y_pos, ball) )
 			return true;
 
 	return false;
@@ -27,8 +26,8 @@ bool AsMonster_Set::Check_Hit(double next_x_pos, double next_y_pos, ABall_Object
 //------------------------------------------------------------------------------------------------------------
 bool AsMonster_Set::Check_Hit(double next_x_pos, double next_y_pos)
 {
-	for (auto *curr_monster : Monsters)
-		if (curr_monster->Check_Hit(next_x_pos, next_y_pos) )
+	for (auto *monster : Monsters)
+		if (monster->Check_Hit(next_x_pos, next_y_pos) )
 			return true;
 
 	return false;
@@ -36,8 +35,8 @@ bool AsMonster_Set::Check_Hit(double next_x_pos, double next_y_pos)
 //------------------------------------------------------------------------------------------------------------
 bool AsMonster_Set::Check_Hit(RECT &rect)
 {
-	for (auto *curr_monster : Monsters)
-		if (curr_monster->Check_Hit(rect) )
+	for (auto *monster : Monsters)
+		if (monster->Check_Hit(rect) )
 			return true;
 
 	return false;
@@ -45,7 +44,7 @@ bool AsMonster_Set::Check_Hit(RECT &rect)
 //------------------------------------------------------------------------------------------------------------
 void AsMonster_Set::Act()
 {
-	int curr_alive_monsters_count;
+	int current_alive_count;
 
 	switch (Monster_Set_State)
 	{
@@ -53,40 +52,44 @@ void AsMonster_Set::Act()
 		break;
 
 
-	case EMonster_Set_State::Select_Next_Gate:
+	case EMonster_Set_State::Selecting_Next_Gate:
 		if (Is_Frozen)
-			return;
-		
-		curr_alive_monsters_count = 0;
-		for (auto *curr_monster : Monsters)
-			if ( ! curr_monster->Is_Finished() )
-				++curr_alive_monsters_count;
+			break;
 
-		if(curr_alive_monsters_count < Max_Alive_Monsters_Count)
+		// Считаем количество живых монстров
+		current_alive_count = 0;
+
+		for (auto *monster : Monsters)
+			if (monster->Is_Finished() )
+				++current_alive_count;
+
+		// Добавляем нового монстра, если можно
+		if (current_alive_count < Max_Alive_Monsters_Count)
 		{
-			Current_Gate = Border->Long_Open_Gate();
-			Monster_Set_State = EMonster_Set_State::Waitinig_For_Open_Gate;
+			Current_Gate_Index = Border->Long_Open_Gate();
+			Monster_Set_State = EMonster_Set_State::Waiting_Gate_Opening;
 		}
 		break;
 
 
-	case EMonster_Set_State::Waitinig_For_Open_Gate:
-		if (Border->Is_Gate_Opened(Current_Gate) )
+	case EMonster_Set_State::Waiting_Gate_Opening:
+		if (Border->Is_Gate_Opened(Current_Gate_Index) )
 		{
-			Let_Out(Current_Gate);
-			Monster_Set_State = EMonster_Set_State::Waitinig_For_Close_Gate;
+			Emit_At_Gate(Current_Gate_Index);
+			Monster_Set_State = EMonster_Set_State::Waiting_Gate_Closing;
 		}
 		break;
 
 
-	case EMonster_Set_State::Waitinig_For_Close_Gate:
-		if (Border->Is_Gate_Close(Current_Gate) )
-			Monster_Set_State = EMonster_Set_State::Select_Next_Gate;
+	case EMonster_Set_State::Waiting_Gate_Closing:
+		if (Border->Is_Gate_Closed(Current_Gate_Index) )
+			Monster_Set_State = EMonster_Set_State::Selecting_Next_Gate;
+
 		break;
 
 
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 
 	if (Monster_Set_State != EMonster_Set_State::Idle)
@@ -96,7 +99,7 @@ void AsMonster_Set::Act()
 		while (it != Monsters.end() )
 			if ( (*it)->Is_Finished() )
 			{
-				delete* it;
+				delete *it;
 				it = Monsters.erase(it);
 			}
 			else
@@ -108,67 +111,80 @@ void AsMonster_Set::Act()
 //------------------------------------------------------------------------------------------------------------
 void AsMonster_Set::Init(AsBorder *border)
 {
-	if (border == 0)
-		AsTools::Throw();
-
 	Border = border;
 }
 //------------------------------------------------------------------------------------------------------------
-void AsMonster_Set::Activate(int max_alive_monsters_count)
+void AsMonster_Set::Emit_At_Gate(int gate_index)
 {
-	Max_Alive_Monsters_Count = max_alive_monsters_count;
-	Monster_Set_State = EMonster_Set_State::Select_Next_Gate;
-}
-//------------------------------------------------------------------------------------------------------------
-void AsMonster_Set::Let_Out(int gate_index)
-{
-	bool is_gate_left;
+	bool gate_is_left;
 	int gate_x_pos, gate_y_pos;
-	AMonster *curr_monster;
+	double x_pos, y_pos;
+	int monster_type;
+	AMonster *monster = 0;
 
 	if (Is_Frozen)
 		return;
 
-	if (Monsters.size() >= AsConfig::Max_Monsters_Count)
+	if (gate_index < 0 || gate_index >= AsConfig::Gates_Count)
+		AsConfig::Throw();
+
+	if (Monsters.size() >= Max_Monsters_Count)
 		return;
 
-	if (AsTools::Rand(2) == 0)
-		curr_monster = new AMonster_Eye();
-	else
-		curr_monster = new AMonster_Comet();
+	monster_type = AsTools::Rand(2);
 
-	Monsters.push_back(curr_monster);
-
-	if (gate_index % 2 == 0)
-		is_gate_left = true;
+	if (monster_type == 0)
+		monster = new AMonster_Eye();
 	else
-		is_gate_left = false;
+		monster = new AMonster_Comet();
+
+	Monsters.push_back(monster);
+
+	if (monster == 0)
+		return;  // Все монстры - заняты (уже на поле)
 
 	Border->Get_Gate_Pos(gate_index, gate_x_pos, gate_y_pos);
 
-	curr_monster->Let_Out(gate_x_pos, gate_y_pos, is_gate_left);
+	x_pos = (double)gate_x_pos;
+	y_pos = (double)gate_y_pos;
+
+	if (gate_index % 2 == 0)
+		gate_is_left = true;
+	else
+		gate_is_left = false;
+
+	if (! gate_is_left)
+		x_pos -= (double)(monster->Width - AGate::Width);
+
+	monster->Activate(x_pos, y_pos + 1.5, gate_is_left);
+
+	//monster->Destroy();
+}
+//------------------------------------------------------------------------------------------------------------
+void AsMonster_Set::Activate(int max_alive_monsters_count)
+{
+	Monster_Set_State = EMonster_Set_State::Selecting_Next_Gate;
+	Max_Alive_Monsters_Count = max_alive_monsters_count;
 }
 //------------------------------------------------------------------------------------------------------------
 void AsMonster_Set::Destroy_All()
 {
-	for (auto *curr_monster : Monsters)
-		curr_monster->Destroy();
+	for (auto *monster : Monsters)
+		monster->Destroy();
 
 	Monster_Set_State = EMonster_Set_State::Idle;
 }
 //------------------------------------------------------------------------------------------------------------
-void AsMonster_Set::Set_Freeze_State(bool is_freeze)
+void AsMonster_Set::Set_Freeze_State(bool freeze)
 {
-	Is_Frozen = is_freeze;
+	Is_Frozen = freeze;
 
-	for (auto *curr_monster : Monsters)
-		curr_monster->Set_Freeze_State(is_freeze);
+	for (auto *monster : Monsters)
+		monster->Set_Freeze_State(freeze);
 }
 //------------------------------------------------------------------------------------------------------------
-bool AsMonster_Set::Get_Next_Obj(int &index, AGame_Object **game_obj)
+bool AsMonster_Set::Get_Next_Game_Object(int &index, AGame_Object **game_obj)
 {
-	AMonster *curr_monster = 0;
-
 	if (index < 0 || index >= (int)Monsters.size() )
 		return false;
 

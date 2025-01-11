@@ -204,7 +204,7 @@ ALevel_Data::ALevel_Data(int level_number)
 	: Level(0)
 {
 	if (level_number < 1 || level_number > Max_Level_Number)
-		AsTools::Throw();
+		AsConfig::Throw();
 
 	switch (level_number)
 	{
@@ -225,7 +225,7 @@ ALevel_Data::ALevel_Data(int level_number)
 		break;
 
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 }
 //------------------------------------------------------------------------------------------------------------

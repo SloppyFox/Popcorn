@@ -1,42 +1,44 @@
-﻿#include "Indicator.h"
+#include "Indicator.h"
 
 // AIndicator
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 AIndicator::AIndicator(EMessage_Type message_type, int x_pos, int y_pos)
-	: Message_Type(message_type), Need_To_Notify(false), X_Pos(x_pos), Y_Pos(y_pos), Indicator_Timer_Tick(0)
+	: Message_Type(message_type), Need_To_Notify(false), X_Pos(x_pos), Y_Pos(y_pos), End_Tick(0)
 {
-	Indicator_Rect.left = X_Pos * AsConfig::Global_Scale;
-	Indicator_Rect.top = Y_Pos * AsConfig::Global_Scale;
-	Indicator_Rect.right = Indicator_Rect.left + Indicator_Width * AsConfig::Global_Scale;
-	Indicator_Rect.bottom = Indicator_Rect.top + Indicator_Height * AsConfig::Global_Scale;
+	const int scale = AsConfig::Global_Scale;
+
+	Indicator_Rect.left = X_Pos * scale;
+	Indicator_Rect.top = Y_Pos * scale;
+	Indicator_Rect.right = Indicator_Rect.left + Width * scale;
+	Indicator_Rect.bottom = Indicator_Rect.top + Height * scale;
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AIndicator::Act()
 {
 	if (! Is_Finished() )
 		AsTools::Invalidate_Rect(Indicator_Rect);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AIndicator::Clear(HDC hdc, RECT &paint_area)
 {
-	//  Заглушка. Этот метод не используется
+	//!!! ���� �������!
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AIndicator::Draw(HDC hdc, RECT &paint_area)
 {
-	int inner_x_offset = (Indicator_Width - Inner_Width) / 2;
-	int inner_y_offset = (Indicator_Height - Inner_Height) / 2;
+	int inner_x_offset = (Width - Inner_Width) / 2;
+	int inner_y_offset = (Height - Inner_Height) / 2;
 	int curr_height;
 	const int scale = AsConfig::Global_Scale;
 	double ratio;
 	RECT rect;
 
-	AsTools::Rect(hdc, X_Pos, Y_Pos, Indicator_Width, Indicator_Height, AsConfig::Floor_Indicator_Color);
+	AsTools::Rect(hdc, X_Pos, Y_Pos, Width, Height, AsConfig::Teleport_Portal_Color);
 
-	if (Indicator_Timer_Tick == 0 || Is_Finished() )
+	if (End_Tick == 0 || Is_Finished() )
 		return;
 
-	ratio = (double)(Indicator_Timer_Tick - AsConfig::Current_Timer_Tick) / (double)Indicator_Timeout;
+	ratio = (double)(End_Tick - AsConfig::Current_Timer_Tick) / (double)Indicator_Timeout;
 
 	curr_height = (int)( (double)(Inner_Height * scale) * ratio);
 
@@ -48,12 +50,12 @@ void AIndicator::Draw(HDC hdc, RECT &paint_area)
 	rect.right = rect.left + Inner_Width * scale;
 	rect.bottom = (Y_Pos + inner_y_offset + Inner_Height) * scale;
 
-	AsTools::Rect(hdc, rect, AsConfig::White_Color);
+	AsTools::Rect(hdc, rect, AsConfig::Red_Color);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 bool AIndicator::Is_Finished()
 {
-	if (AsConfig::Current_Timer_Tick > Indicator_Timer_Tick)
+	if (AsConfig::Current_Timer_Tick > End_Tick)
 	{
 		Cancel();
 		return true;
@@ -61,14 +63,7 @@ bool AIndicator::Is_Finished()
 	else
 		return false;
 }
-//-----------------------------------------------------------------------------------------------------------
-void AIndicator::Restart()
-{
-	Need_To_Notify = true;
-
-	Indicator_Timer_Tick = AsConfig::Current_Timer_Tick + Indicator_Timeout;
-}
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AIndicator::Cancel()
 {
 	AMessage *message;
@@ -84,10 +79,16 @@ void AIndicator::Cancel()
 
 	Reset();
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+void AIndicator::Restart()
+{
+	End_Tick = AsConfig::Current_Timer_Tick + Indicator_Timeout;
+	Need_To_Notify = true;
+}
+//------------------------------------------------------------------------------------------------------------
 void AIndicator::Reset()
 {
-	Indicator_Timer_Tick = 0;
+	End_Tick = 0;
 	AsTools::Invalidate_Rect(Indicator_Rect);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

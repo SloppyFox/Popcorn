@@ -1,13 +1,8 @@
-п»ї#include "Common.h"
+#include "Common.h"
 
 // AMover
 //------------------------------------------------------------------------------------------------------------
 AMover::~AMover()
-{
-}
-//------------------------------------------------------------------------------------------------------------
-AMover::AMover()
-	: Speed(0.0)
 {
 }
 //------------------------------------------------------------------------------------------------------------
@@ -18,7 +13,8 @@ AMover::AMover()
 // AGraphics_Object
 //------------------------------------------------------------------------------------------------------------
 AGraphics_Object::~AGraphics_Object()
-{}
+{
+}
 //------------------------------------------------------------------------------------------------------------
 
 
@@ -29,40 +25,39 @@ AGraphics_Object::~AGraphics_Object()
 void AGame_Objects_Set::Begin_Movement()
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Begin_Movement();
+	while (Get_Next_Game_Object(index, &object) )
+		object->Begin_Movement();
 }
 //------------------------------------------------------------------------------------------------------------
 void AGame_Objects_Set::Finish_Movement()
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Finish_Movement();
+	while (Get_Next_Game_Object(index, &object) )
+		object->Finish_Movement();
 }
 //------------------------------------------------------------------------------------------------------------
 void AGame_Objects_Set::Advance(double max_speed)
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Advance(max_speed);
+	while (Get_Next_Game_Object(index, &object) )
+		object->Advance(max_speed);
 }
 //------------------------------------------------------------------------------------------------------------
 double AGame_Objects_Set::Get_Speed()
 {
 	int index = 0;
-	double max_speed = 0.0;
-	double curr_speed;
-	AGame_Object *game_obj;
+	AGame_Object *object;
+	double curr_speed, max_speed = 0.0;
 
-	while(Get_Next_Obj(index, &game_obj) )
+	while (Get_Next_Game_Object(index, &object) )
 	{
-		curr_speed = fabs(game_obj->Get_Speed() );
+		curr_speed = object->Get_Speed();
 
 		if (curr_speed > max_speed)
 			max_speed = curr_speed;
@@ -74,33 +69,33 @@ double AGame_Objects_Set::Get_Speed()
 void AGame_Objects_Set::Act()
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Act();
+	while (Get_Next_Game_Object(index, &object) )
+		object->Act();
 }
 //------------------------------------------------------------------------------------------------------------
 void AGame_Objects_Set::Clear(HDC hdc, RECT &paint_area)
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Clear(hdc, paint_area);
+	while (Get_Next_Game_Object(index, &object) )
+		object->Clear(hdc, paint_area);
 }
 //------------------------------------------------------------------------------------------------------------
 void AGame_Objects_Set::Draw(HDC hdc, RECT &paint_area)
 {
 	int index = 0;
-	AGame_Object *game_obj;
+	AGame_Object *object;
 
-	while(Get_Next_Obj(index, &game_obj) )
-		game_obj->Draw(hdc, paint_area);
+	while (Get_Next_Game_Object(index, &object) )
+		object->Draw(hdc, paint_area);
 }
 //------------------------------------------------------------------------------------------------------------
 bool AGame_Objects_Set::Is_Finished()
 {
-	return false;  // Р­С‚РѕС‚ РјРµС‚РѕРґ РїРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРё РІ РѕРґРЅРѕРј РёР· РѕР±СЉРµРєС‚РѕРІ
+	return false;  // Заглушка, т.к. этот метод не используется
 }
 //------------------------------------------------------------------------------------------------------------
 
@@ -108,34 +103,36 @@ bool AGame_Objects_Set::Is_Finished()
 
 
 // AString
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 AString::AString()
 {
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 AString::AString(const wchar_t *str)
 	: Content(str)
 {
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AString::Append(int value)
 {
-	wchar_t buf[32]{};
+	wchar_t buf[32];
 
+	//_itow_s(value, buf, 32, 10);
 	swprintf(buf, 32, L"%.6i", value);
+
 	Content += buf;
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 const wchar_t *AString::Get_Content()
 {
 	return Content.c_str();
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 int AString::Get_Length()
 {
-	return (int)Content.length();
+	return Content.length();
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 
 
 
@@ -143,7 +140,7 @@ int AString::Get_Length()
 // AMessage
 //------------------------------------------------------------------------------------------------------------
 AMessage::AMessage(EMessage_Type message_type)
-	: Type(message_type)
+: Message_Type(message_type)
 {
 }
 //------------------------------------------------------------------------------------------------------------
@@ -152,21 +149,21 @@ AMessage::AMessage(EMessage_Type message_type)
 
 
 // AsMessage_Manager
-std::queue<AMessage *> AsMessage_Manager::Message_Queue;
+std::queue<AMessage *> AsMessage_Manager::Messages_Queue;
 //------------------------------------------------------------------------------------------------------------
 void AsMessage_Manager::Add_Message(AMessage *message)
 {
-	Message_Queue.push(message);
+	Messages_Queue.push(message);
 }
 //------------------------------------------------------------------------------------------------------------
 bool AsMessage_Manager::Get_Message(AMessage **message)
 {
-	if (Message_Queue.size() == 0)
+	if (Messages_Queue.size() == 0)
 		return false;
 
-	*message = Message_Queue.front();
+	*message = Messages_Queue.front();
 
-	Message_Queue.pop();
+	Messages_Queue.pop();
 
 	return true;
 }

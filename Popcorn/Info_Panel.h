@@ -3,14 +3,14 @@
 #include "Falling_Letter.h"
 #include "Indicator.h"
 
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 enum class EScore_Event_Type: unsigned char
 {
 	Hit_Brick,
 	Hit_Monster,
 	Catch_Letter
 };
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 class AsInfo_Panel: public AGame_Object
 {
 public:
@@ -38,35 +38,31 @@ public:
 private:
 	void Choose_Font();
 	void Show_Extra_Lives(HDC hdc);
-	void Draw_Logo(HDC hdc, RECT &paint_area);
 	void Draw_Extra_Life(HDC hdc, int x_pos, int y_pos);
-	void Draw_Indicators_Panel(HDC hdc, RECT &paint_area);
-	void Draw_Player_Name_Panel(HDC hdc, RECT &paint_area);
-	void Draw_Score_Panel(HDC hdc, RECT &paint_area);
-	void Draw_String(HDC hdc, RECT &str_rect, HFONT &font, AString &str, const AColor &color);
-	void Draw_Rect_With_Shadow(HDC hdc, RECT &panel_rect, const AColor &panel_color);
-	void Get_Shadow_Rect(RECT &src_rect, RECT &dst_rect, int distance_to_shadow);
+	void Draw_String(HDC hdc, RECT &rect, AString &str, bool draw_name);
 
 	int Extra_Lives_Count;
+	HFONT Logo_Pop_Font, Logo_Corn_Font, Name_Font, Score_Font;
+	AColor *Shadow_Color, *Highlight_Color, *Dark_Blue, *Dark_Red;
 
-	AColor *Shadow_Color, *Highlight_Color;
-	AFalling_Letter Letter_F, Letter_M, Letter_Plus;
+	AFalling_Letter Letter_P, Letter_G, Letter_M;
 
-	RECT Logo_Rect;
-	RECT Indicators_Panel_Rect, Name_Rect;
 	AString Player_Name;
-	HFONT Logo_Pop_Font, Logo_Corn_Font, Player_Name_Font; 
+
+	static RECT Logo_Rect;  // Область логотипа
+	static RECT Data_Rect;  // Область данных (имени игрока, счёта и индикаторов)
 
 	static int Score;
-	static RECT Score_Rect;
 
-	static const int Shadow_X_Offset = 5 * AsConfig::Global_Scale;
-	static const int Shadow_Y_Offset = 5 * AsConfig::Global_Scale;
-	static const int Indicators_Panel_X_Pos = 208;
-	static const int Indicators_Panel_Y_Pos = 108;
-	static const int Indicators_Panel_Width = 110;
-	static const int Indicators_Panel_Heigth = 90;
-	static const int Logo_X_Pos = 223;
-	static const int Logo_Y_Pos = 3;
+	static const int Logo_X_Pos = 212;
+	static const int Logo_Y_Pos = 0;
+	static const int Shadow_X_Offset = 5;
+	static const int Shadow_Y_Offset = 5;
+	static const int Score_X = 208;
+	static const int Score_Y = 108;
+	static const int Score_Width = 110;
+	static const int Score_Height = 90;
+	static const int Score_Value_Offset = 20;
+	static const int Indicator_Y_Offset = 55;
 };
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

@@ -12,8 +12,10 @@ public:
 	void Disable_All();
 
 private:
-	virtual bool Get_Next_Obj(int &index, AGame_Object **game_obj);
+	bool Get_Next_Game_Object(int &index, AGame_Object **game_obj);
 
 	std::vector<ALaser_Beam> Laser_Beams;
+
+	static const int Max_Laser_Beam_Count = 10;
 };
 //------------------------------------------------------------------------------------------------------------

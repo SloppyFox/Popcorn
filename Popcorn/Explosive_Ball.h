@@ -6,7 +6,7 @@
 enum class EExplosive_Ball_State: unsigned char
 {
 	Idle,
-	Waiting,
+	Charging,
 	Expanding,
 	Fading
 };
@@ -21,30 +21,25 @@ public:
 	virtual void Draw(HDC hdc, RECT &paint_area);
 	virtual bool Is_Finished();
 
-	void Explode(double x_pos, double y_pos, double max_size, int explode_delay_ticks, bool is_red);
+	void Explode(int x_pos, int y_pos, int size, bool is_red, int time_offset, int step_count);
 
 	static void Setup_Colors();
 
 private:
-	void Update_Rect();
-	void Act_Expanding_State();
-	void Act_Fading_State();
+	void Update_Ball_Rect();
 
 	EExplosive_Ball_State Explosive_Ball_State;
 	bool Is_Red;
-	double X_Pos, Y_Pos;
-	double Size, Max_Size;
-	int Start_Explode_Tick, Start_Fading_Tick, End_Explode_Tick;
+	int X_Pos, Y_Pos;
+	int Step_Count;
+	int Start_Expanding_Tick, Start_Fading_Tick;
+	int Time_Offset;
+	double Size, Max_Size, Size_Step;
+	RECT Ball_Rect;
 
-	RECT Curr_Rect;
-
-	AColor *Curr_Ball_Color;
-
-	static const int Expanding_Timeout = AsConfig::FPS / 2;
-	static const int Fading_Timeout = AsConfig::FPS / 2;
-	static const int Fading_Steps_Count = Fading_Timeout;
-
-	static AColor Fading_Red_Colors[Fading_Steps_Count];
-	static AColor Fading_Blue_Colors[Fading_Steps_Count];
+	static const int Fading_Timeout = AsConfig::FPS;
+	static const int Max_Fade_Step = AsConfig::FPS;
+	static AColor Fading_Red_Colors[Max_Fade_Step];
+	static AColor Fading_Blue_Colors[Max_Fade_Step];
 };
 //------------------------------------------------------------------------------------------------------------

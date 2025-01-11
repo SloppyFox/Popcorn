@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Gate.h"
 #include "Level.h"
@@ -23,26 +23,18 @@ public:
 	virtual bool Is_Finished();
 
 	void Redraw_Floor();
-	void Open_Gate(int gate_index, bool is_short_open);
+	void Open_Gate(int gate_index, bool short_open);
 	int Long_Open_Gate();
 	bool Is_Gate_Opened(int gate_index);
-	bool Is_Gate_Close(int gate_index);
+	bool Is_Gate_Closed(int gate_index);
 	void Get_Gate_Pos(int gate_index, int &gate_x_pos, int &gate_y_pos);
 
 private:
-	void Draw_Tile(HDC hdc, RECT &paint_area, int x, int y, bool is_top) const;
-	void Draw_Bounds(HDC hdc, RECT &paint_area) const;
-	void Draw_Floor(HDC hdc, RECT &paint_area) const;
+	void Draw_Element(HDC hdc, RECT &paint_area, int x, int y, bool top_border);
+	void Draw_Floor(HDC hdc, RECT &paint_area);
 
 	bool Clear_Floor;
-
-	std::vector<AGate *> Gates;
-
 	RECT Floor_Rect;
-
-	static const int Tile_Size = 4;
-	static const int Left_Border_X_Offset = AsConfig::Level_X_Offset - 1;
-	static const int Right_Border_X_Offset = AsConfig::Level_Max_X_Offset + 1;
-	static const int Top_Border_X_Offset = AsConfig::Level_Y_Offset - Tile_Size / 2;
+	std::vector<AGate *> Gates;
 };
 //------------------------------------------------------------------------------------------------------------

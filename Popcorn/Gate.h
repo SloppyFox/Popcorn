@@ -22,50 +22,47 @@ enum class EGate_Transformation: unsigned char
 class AGate: public AGraphics_Object
 {
 public:
-	AGate(int x_pos, int y_pos, int level_x = -1, int level_y = -1);
+	AGate(int x_pos, int y_pos, int level_x_pos = -1, int level_y_pos = -1);
 
 	virtual void Act();
 	virtual void Clear(HDC hdc, RECT &paint_area);
 	virtual void Draw(HDC hdc, RECT &paint_area);
 	virtual bool Is_Finished();
 
-	void Open_Gate(bool is_short_open);
-	bool Is_Gate_Open() const;
-	bool Is_Gate_Close() const;
-	void Get_Y_Area(int &gate_top_y, int &gate_low_y) const;
-	void Get_Gate_Pos(int &gate_x_pos, int &gate_y_pos) const;
+	void Open_Gate(bool short_open);
+	bool Is_Opened();
+	bool Is_Closed();
+	void Get_Y_Size(int &gate_top_y, int &gate_low_y);
+	void Get_Pos(int &gate_x_pos, int &gate_y_pos);
 
-	const int Level_X, Level_Y;
+	int Level_X_Pos, Level_Y_Pos;  // ѕозици€ на уровне, соответствующа€ верхнему кирпичу напротив гейта (-1, если гейт не находитс€ напротив кирпичей)
 
 	static const int Width = 6;
+	static const int Height = 19;
 
 private:
-	void Act_Opening(bool is_short, bool &correct_pos);
-	void Draw_Cup(HDC hdc, bool is_top) const;
-	void Draw_Part(HDC hdc, bool is_top);
+	bool Act_For_Open(bool short_open, bool &correct_pos);
+	void Draw_Cup(HDC hdc, bool top_cup);
 	void Draw_Edges(HDC hdc);
-	void Draw_Short_Open_Edges(HDC hdc);
-	void Draw_Long_Open_Edges(HDC hdc);
-	void Draw_Red_Edge(HDC hdc, int edges_y_offset, bool is_long_edge, bool has_highlight);
-	void Draw_One_Edge(HDC hdc, int edges_y_offset, bool is_long_edge);
-	void Draw_Charge(HDC hdc) const;
+	void Draw_Short_Opening_Edges(HDC hdc);
+	void Draw_Long_Opening_Edges(HDC hdc);
+	void Draw_One_Edge(HDC hdc, int edge_y_offset, bool long_edge);
+	void Draw_Red_Edge(HDC hdc, int edge_y_offset, bool long_edge, bool has_highlight);
+	void Draw_Charge(HDC hdc);
 	void Redraw_Gate();
 
 	EGate_State Gate_State;
 	EGate_Transformation Gate_Transformation;
-
 	int X_Pos;
 	double Y_Pos, Origin_Y_Pos;
-	int Gate_Open_Timer_Tick;
-
+	int Edges_Count;
+	int Gate_Close_Tick;
 	double Gap_Height;
-
 	RECT Gate_Rect;
 
-	static const double Max_Gap_Short_Height, Opening_Short_Step;
-	static const double Max_Gap_Long_Height, Opening_Long_Step;
-
-	static const int Height = 19;
-	static const int Edges_Count = 5;
+	static const double Max_Gap_Short_Height, Gap_Height_Short_Step;
+	static const double Max_Gap_Long_Height, Gap_Height_Long_Step;
+	static const int Short_Opening_Timeout = AsConfig::FPS;  // 1 секунда
+	static const int Long_Opening_Timeout = AsConfig::FPS * 3;  // 3 секунды
 };
 //------------------------------------------------------------------------------------------------------------

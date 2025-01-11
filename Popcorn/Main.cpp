@@ -1,5 +1,9 @@
+﻿// Popcorn.cpp : Defines the entry point for the application.
+//
+
 #include "framework.h"
 #include "Main.h"
+
 // AsFrame_DC
 //------------------------------------------------------------------------------------------------------------
 AsFrame_DC::~AsFrame_DC()
@@ -12,7 +16,7 @@ AsFrame_DC::~AsFrame_DC()
 }
 //------------------------------------------------------------------------------------------------------------
 AsFrame_DC::AsFrame_DC()
-	: Width(0), Height(0), DC(0), Bitmap(0)
+: Width(0), Height(0), DC(0), Bitmap(0)
 {
 }
 //------------------------------------------------------------------------------------------------------------
@@ -70,7 +74,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 AsMain_Window *AsMain_Window::Self = 0;
 //------------------------------------------------------------------------------------------------------------
 AsMain_Window::AsMain_Window()
-	: Instance(0), szTitle{}, szWindowClass{}
+: Instance(0), szTitle{}, szWindowClass{}
 {
 	Self = this;
 }
@@ -83,23 +87,26 @@ int APIENTRY AsMain_Window::Main(HINSTANCE instance, int command_show)
 	Instance = instance; // Store instance handle in our global variable
 
 	// Initialize global strings
-	LoadStringW(Instance, IDS_APP_TITLE, szTitle, Max_Load_String);
-	LoadStringW(Instance, IDC_POPCORN, szWindowClass, Max_Load_String);
+	LoadStringW(Instance, IDS_APP_TITLE, szTitle, Max_String_Size);
+	LoadStringW(Instance, IDC_POPCORN, szWindowClass, Max_String_Size);
 	Register_Class();
 
 	// Perform application initialization:
-	if (! Init_Instance(command_show) )
+	if (! Init_Instance(command_show))
 		return FALSE;
 
-	accel_table = LoadAccelerators(Instance, MAKEINTRESOURCE(IDC_POPCORN) );
+	accel_table = LoadAccelerators(Instance, MAKEINTRESOURCE(IDC_POPCORN));
+
 
 	// Main message loop:
 	while (GetMessage(&msg, nullptr, 0, 0))
+	{
 		if (!TranslateAccelerator(msg.hwnd, accel_table, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
 
 	return (int)msg.wParam;
 }
@@ -115,12 +122,12 @@ ATOM AsMain_Window::Register_Class()
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = Instance;
-	wcex.hIcon = LoadIcon(Instance, MAKEINTRESOURCE(IDC_POPCORN) );
+	wcex.hIcon = LoadIcon(Instance, MAKEINTRESOURCE(IDI_POPCORN));
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = AsConfig::BG_Color.Get_Brush();
 	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_POPCORN);
 	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm = LoadIcon(Instance, MAKEINTRESOURCE(IDI_SMALL) );
+	wcex.hIconSm = LoadIcon(Instance, MAKEINTRESOURCE(IDI_SMALL));
 
 	return RegisterClassExW(&wcex);
 }
@@ -132,8 +139,8 @@ BOOL AsMain_Window::Init_Instance(int command_show)
 
 	window_rect.left = 0;
 	window_rect.top = 0;
-	window_rect.right = 320 * AsConfig::Global_Scale;
-	window_rect.bottom = 200 * AsConfig::Global_Scale;
+	window_rect.right = 320 * 3;
+	window_rect.bottom = 200 * 3;
 
 	AdjustWindowRect(&window_rect, WS_OVERLAPPEDWINDOW, TRUE);
 
@@ -189,7 +196,7 @@ LRESULT CALLBACK AsMain_Window::Window_Proc(HWND hWnd, UINT message, WPARAM wPar
 
 	case WM_PAINT:
 		Self->On_Paint(hWnd);
-		break;
+	break;
 
 
 	case WM_DESTROY:
@@ -262,3 +269,141 @@ INT_PTR CALLBACK AsMain_Window::About(HWND hDlg, UINT message, WPARAM wParam, LP
 	return (INT_PTR)FALSE;
 }
 //------------------------------------------------------------------------------------------------------------
+/*
+
+V Конец уровня при потере мяча
+V 1. Анимация расплавления платформы
+V 2. Анимация выкатывания новой
+V 3. Анимация расширяющейся платформы
+V 4. Пуск мяча пробелом и состояния мяча
+
+V Кирпичи
+V 1. Обычные кирпичи (синие или красные)
+V 1.1. Могут быть с буквой или без
+V 1.2. При попадании в кирпич он исчезает из уровня сразу, и если кирпич был:
+V 1.2.1. Без буквы - создаётся активный кирпич
+V 1.2.2. С буквой - создаётся падающая буква
+
+V 2. Неразрушаемый кирпич
+V 2.1. Анимация при попадании
+
+V 3. Многоразовый кирпич
+V 3.1. 4 состояния кирпича (1-4 удара до разрушения)
+V 3.2. Переход по состояниям
+V 3.3. Анимация приза при разрушении (кирпич исчезает, анимация - остаётся)
+
+V 4. Кирпич с парашютом
+V 4.1. Анимация парашюта - как вариант падающей буквы
+
+V 5. Кирпич телепортации
+V 5.1. Анимация при захвате и выпуске мяча
+
+V 6. Кирпич рекламы
+V 6.1. Анимация фрагмента "рекламы", скрывавшейся за кирпичом
+
+
+V Взаимодействие особых кирпичей
+V 1. Падающая буква - взаимодействует только с платформой
+V 2. Активный кирпич - взаимодействует только с шариком
+
+
+Действия букв
+1. Простые:
+1.1. О ("Отмена") — отмена действия символов К, Ш, П, Л и М.
+V 1.2. И ("Инверсия")
+V 1.3. С ("Скорость")
+V 1.4. М ("Монстры")
+V 1.5. Ж ("Жизнь")
+
+
+2. Сложные:
+V 2.1. К ("Клей")
+V 2.1.1. Новое состояние платформы
+V 2.1.2. Анимация растекающегося клея (прямая и обратная)
+V 2.1.3. Фиксация шарика (+ новое состояние шарика)
+V 2.1.4. Пуск шарика пробелом и по таймауту
+
+V 2.2. Ш ("Шире")
+V 2.2.1. Новое состояние платформы (+ изменение размера)
+V 2.2.2. Анимация расширяющейся платформы (прямая и обратная)
+
+V 2.3. П ("Пол")
+V 2.3.1. Отрисовка пола
+V 2.3.2. Шкала пола
+V 2.3.3. Взаимодействие пола с мячом
+V 2.3.4. Отбитие мяча нижней гранью платформы
+
+V 2.4. Л ("Лазер")
+V 2.4.1. Новое состояние платформы
+V 2.4.2. Анимация превращения в пушку (прямая и обратная)
+V 2.4.3. Стрельба пробелом:
+V 2.4.3.1. Обработка пробела особым образом, когда платформа в режиме лазера
+V 2.4.3.2. Объекты лазерных лучей - анимация, перемещение и взаимодействие с другими объектами
+
+V 2.5. Т ("Три")
+V 2.5.1. Добавить поддержку множества мячиков
+V 2.5.2. Вывод множества мячиков
+V 2.5.3. Взаимодействие множества мячиков с элементами игры
+
+2.6. + (Переход на следующий уровень)
+2.6.1. Анимация досрочного перехода на следующий уровень
+2.6.2. Отдельный уровень перехода с особыми стенками (рамкой)
+
+V Движение мячика
+V 1. Отскок мячика от рамки
+V 2. Попадания в края платформы
+V 3. Подсечка мяча платформой
+V 4. Попадание в монстра
+
+Попадание в кирпич
+V 1. Попадание в кирпич - состояния кирпича
+V 2. Выбивание падающей буквы
+V 3. Перехват падающей буквы
+4. Для каждой буквы - свои действия
+
+V Гейты
+V 1. Вывод гейтов
+V 2. Анимация открытия/закрытия гейтов
+V 3. Состояния гейтов (закрыт, открывается, закрывается)
+
+
+V Монстры
+V 1. Список монстров (глаз, "черепаха", "сатурн", голова, "бубен", аквариум, зажигалка)
+V 2. Для каждого - сделать раскадровку
+V 3. Перемещение, выбор направления + состояния (живой/пауза/исчезает)
+V 4. Взаимодействие с мячом и платформой
+V 5. Выход из гейта
+V 6. Для каждого - анимация
+
+
+V Информационная панель
+V 1. Логотип
+V 2. Индикаторы
+V 2.1. Имя игрока
+V 2.2 Текущий счёт
+V 3. Шкала монстров и пола
+V 4. Изменение шкал
+V 5. Окно дополнительных жизней
+V 6. Учёт игровых действий и отображение на индикаторах
+
+
+Игра и уровни
+1. Список первых 10 уровней
+2. Состояния игры:
+2.1. Заставка
+2.2. Анимация начала уровня
+2.3. Играем уровень
+2.4. Потеря жизни
+2.5. Переход на следующий уровень:
+2.5.1. Нормальный
+2.5.2. Досрочный
+2.6. Окончание игры
+
+3. Финальная настройка
+3.1. Исправляем 1-й уровень
+3.2. Играем и исправляем ошибки
+3.3. Компилим в релизе
+
+
+
+*/

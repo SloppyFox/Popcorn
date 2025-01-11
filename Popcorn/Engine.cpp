@@ -3,12 +3,15 @@
 // AsEngine
 //------------------------------------------------------------------------------------------------------------
 AsEngine::AsEngine()
-: Timer_ID(WM_USER + 1), Game_State(EGame_State::Lost_Ball), Rest_Distance(0.0)
+: Timer_ID(WM_USER + 1), Game_State(EGame_State::Lost_Ball), Rest_Distance(0.0), Modules{}
 {
 }
 //------------------------------------------------------------------------------------------------------------
 void AsEngine::Init_Engine(HWND hwnd)
-{
+{// Настройка игры при старте
+
+	int index;
+
 	SYSTEMTIME sys_time;
 	FILETIME file_time;
 
@@ -19,9 +22,8 @@ void AsEngine::Init_Engine(HWND hwnd)
 
 	AsConfig::Hwnd = hwnd;
 
-	AActive_Brick_Fading::Setup_Colors();
+	AActive_Brick_Red_Blue::Setup_Colors();
 	AExplosive_Ball::Setup_Colors();
-
 
 	Level.Init();
 	Platform.Init(&Ball_Set, &Laser_Beam_Set);
@@ -40,26 +42,31 @@ void AsEngine::Init_Engine(HWND hwnd)
 
 	AsPlatform::Hit_Checker_List.Add_Hit_Checker(&Monster_Set);
 
-	Level.Set_Current_Level(3);
+	Level.Set_Current_Level(ALevel_Data::Max_Level_Number);
 
-	//Ball.Set_State(EBall_State::On_Platform, (double)(Platform.X_Pos + Platform.Width / 2) );
+	//Ball.Set_State(EBall_State::Normal, Platform.X_Pos + Platform.Width / 2);
+	//Platform.Set_State(EPS_Normal);
 	//Platform.Set_State(EPlatform_State::Laser);
 
-	Platform.Redraw();
+	Platform.Redraw_Platform();
 
 	SetTimer(AsConfig::Hwnd, Timer_ID, 1000 / AsConfig::FPS, 0);
 
+	// Modules
+	index = 0;
+
 	Modules.push_back(&Level);
 	Modules.push_back(&Border);
+	Modules.push_back(&Platform);
 	Modules.push_back(&Ball_Set);
 	Modules.push_back(&Laser_Beam_Set);
 	Modules.push_back(&Monster_Set);
 	Modules.push_back(&Info_Panel);
-	Modules.push_back(&Platform);
 }
 //------------------------------------------------------------------------------------------------------------
 void AsEngine::Draw_Frame(HDC hdc, RECT &paint_area)
-{
+{// Отрисовка экрана игры
+
 	SetGraphicsMode(hdc, GM_ADVANCED);
 
 	for (auto *curr_module : Modules)
@@ -110,7 +117,7 @@ int AsEngine::On_Timer()
 
 	case EGame_State::Lost_Ball:
 		if (Platform.Has_State(EPlatform_Substate_Regular::Missing) )
-			if (Restart_Level() )
+			if (! Restart_Level() )
 				Game_Over();
 		break;
 
@@ -120,14 +127,12 @@ int AsEngine::On_Timer()
 		{
 			Game_State = EGame_State::Play_Level;
 			Ball_Set.Set_On_Platform(Platform.Get_Middle_Pos() );
-			Monster_Set.Activate(AsConfig::Max_Monsters_Count);
+			Monster_Set.Activate(7);
 		}
 		break;
 	}
 
 	Act();
-
-	//if (AsConfig::Current_Timer_Tick % 10 == 0)
 
 	return 0;
 }
@@ -139,6 +144,7 @@ bool AsEngine::Restart_Level()
 
 	Game_State = EGame_State::Restart_Level;
 	Border.Open_Gate(7, true);
+
 	return true;
 }
 //------------------------------------------------------------------------------------------------------------
@@ -146,8 +152,9 @@ void AsEngine::Play_Level()
 {
 	Advance_Movers();
 
-	if (Ball_Set.Are_All_Balls_Lost() )
-	{			
+	if (Ball_Set.All_Balls_Are_Lost() )
+	{// Потеряли все мячики
+
 		Game_State = EGame_State::Lost_Ball;
 		Level.Stop();
 		Monster_Set.Destroy_All();
@@ -165,39 +172,38 @@ void AsEngine::Play_Level()
 //------------------------------------------------------------------------------------------------------------
 void AsEngine::Game_Over()
 {
-	// !!! Надо сделать
+	AsConfig::Throw();  //!!! Надо сделать!
 }
 //------------------------------------------------------------------------------------------------------------
 void AsEngine::Advance_Movers()
 {
 	double curr_speed, max_speed = 0.0;
 
+	// 1. Получаем максимальную скорость движущихся объектов
 	for (auto *curr_module : Modules)
 	{
 		curr_module->Begin_Movement();
-	
+
 		curr_speed = fabs(curr_module->Get_Speed() );
 
 		if (curr_speed > max_speed)
 			max_speed = curr_speed;
 	}
 
+
+	// 2. Смещаем все движущиеся объекты
 	Rest_Distance += max_speed;
 
-	while (Rest_Distance > 0)
+	while (Rest_Distance > 0.0)
 	{
 		for (auto *curr_module : Modules)
-		{
 			curr_module->Advance(max_speed);
-
-			if (curr_module == &Platform && Platform.Get_State() == EPlatform_State::Glue) 
-				if ( ! (Platform.Get_Moving_State() == EPlatform_Moving_State::Stop || Platform.Get_Moving_State() == EPlatform_Moving_State::Stopping) )
-					Ball_Set.Forced_Advance(Platform.Get_X_Offset() );
-		}
 
 		Rest_Distance -= AsConfig::Moving_Step_Size;
 	}
 
+
+	// 3. Заканчиваем все движения на этом кадре
 	for (auto *curr_module : Modules)
 		curr_module->Finish_Movement();
 }
@@ -207,15 +213,18 @@ void AsEngine::Act()
 	int index = 0;
 	AFalling_Letter *falling_letter;
 
+	// 1. Выполняем все действия
 	for (auto *curr_module : Modules)
 		curr_module->Act();
 
-	while (Level.Get_Falling_Letter(index, &falling_letter) )
+	// 2. Ловим падающие буквы
+	while (Level.Get_Next_Falling_Letter(index, &falling_letter) )
 	{
 		if (Platform.Hit_By(falling_letter) )
 			On_Falling_Letter(falling_letter);
 	}
 
+	// 3. Рестарт уровня (если надо)
 	if (Game_State == EGame_State::Restart_Level)
 		if (Border.Is_Gate_Opened(AsConfig::Gates_Count - 1) )
 			Platform.Set_State(EPlatform_State::Rolling);
@@ -229,22 +238,21 @@ void AsEngine::Handle_Message()
 
 	if (AsMessage_Manager::Get_Message(&message) )
 	{
-		switch (message->Type)
+		switch (message->Message_Type)
 		{
-		case EMessage_Type::Floor_Is_Ends:
+		case EMessage_Type::Floor_Is_Over:
 			AsConfig::Level_Has_Floor = false;
 			Border.Redraw_Floor();
+			delete message;
 			break;
 
-		case EMessage_Type::Unfreeze_Monster:
+		case EMessage_Type::Unfreeze_Monsters:
 			Monster_Set.Set_Freeze_State(false);
 			break;
 
 		default:
-			AsTools::Throw();
+			AsConfig::Throw();
 		}
-
-		delete message;
 	}
 }
 //------------------------------------------------------------------------------------------------------------
@@ -252,63 +260,62 @@ void AsEngine::On_Falling_Letter(AFalling_Letter *falling_letter)
 {
 	switch (falling_letter->Letter_Type)
 	{
-	case ELetter_Type::C: // cansel action of letters
+	case ELetter_Type::O:  // "Отмена"
 		Info_Panel.Floor_Indicator.Cancel();
 		Info_Panel.Monster_Indicator.Cancel();
 		Platform.Set_State(EPlatform_Substate_Regular::Normal);
 		break;
 
-	case ELetter_Type::I: // inversion
-		Ball_Set.Inverse_Direction_Balls();
+	case ELetter_Type::I:  // "Инверсия"
+		Ball_Set.Inverse_Balls();
 		Platform.Set_State(EPlatform_Substate_Regular::Normal);
 		break;
 
-	case ELetter_Type::V: // velosity
+	case ELetter_Type::C:  // "Скорость"
 		Ball_Set.Reset_Speed();
 		Platform.Set_State(EPlatform_Substate_Regular::Normal);
 		break;
 
-	case ELetter_Type::M: // monsters
+	case ELetter_Type::M:  // "Монстры"
 		Monster_Set.Set_Freeze_State(true);
-		Info_Panel.Monster_Indicator.Restart();
+		Info_Panel.Monster_Indicator.Restart();  // Отобразить на индикаторе
 		break;
 
-	case ELetter_Type::Plus: // life
+	case ELetter_Type::G:  // "Жизнь"
 		Info_Panel.Increase_Life_Count();
 		Platform.Set_State(EPlatform_Substate_Regular::Normal);
 		break;
 
-	case ELetter_Type::G: // glue
+	case ELetter_Type::K:  // "Клей"
 		Platform.Set_State(EPlatform_State::Glue);
 		break;
 
-	case ELetter_Type::W: // width
+	case ELetter_Type::W:  // "Шире"
 		Platform.Set_State(EPlatform_State::Expanding);
 		break;
 
-	case ELetter_Type::F: // floor
-		AsConfig::Level_Has_Floor = true;
-		Info_Panel.Floor_Indicator.Restart();
-		Platform.Set_State(EPlatform_Substate_Regular::Normal);
-		Border.Redraw_Floor();
-		break;
-
-	case ELetter_Type::L: // laser
-		Platform.Set_State(EPlatform_State::Laser);
-		break;
-
-	case ELetter_Type::T: // three balls
+	case ELetter_Type::T:  // "Три"
 		Platform.Set_State(EPlatform_Substate_Regular::Normal);
 		Ball_Set.Triple_Balls();
 		break;
 
-		//case ELetter_Type::N: // next level
+	case ELetter_Type::L:  // "Лазер"
+		Platform.Set_State(EPlatform_State::Laser);
+		break;
 
+	case ELetter_Type::P:  // "Пол"
+		AsConfig::Level_Has_Floor = true;
+		Border.Redraw_Floor();
+		Info_Panel.Floor_Indicator.Restart();  // Отобразить на индикаторе
+		Platform.Set_State(EPlatform_Substate_Regular::Normal);
+		break;
+
+	//case ELetter_Type::Plus:  // Переход на следующий уровень
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 
-	falling_letter->Destroy();
+	falling_letter->Finalize();
 
 	AsInfo_Panel::Update_Score(EScore_Event_Type::Catch_Letter);
 }

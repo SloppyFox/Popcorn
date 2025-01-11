@@ -2,7 +2,7 @@
 
 #include "Config.h"
 
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 class AIndicator: public AGraphics_Object
 {
 public:
@@ -13,23 +13,21 @@ public:
 	virtual void Draw(HDC hdc, RECT &paint_area);
 	virtual bool Is_Finished();
 
-	void Restart();
 	void Cancel();
+	void Restart();
 	void Reset();
 
 private:
 	EMessage_Type Message_Type;
-
 	bool Need_To_Notify;
 	int X_Pos, Y_Pos;
-	int Indicator_Timer_Tick;
-
+	int End_Tick;
 	RECT Indicator_Rect;
 
-	static const int Indicator_Width = 13;
-	static const int Indicator_Height = 30;
-	static const int Inner_Width = Indicator_Width - 2;
-	static const int Inner_Height = Indicator_Height - 2;
-	static const int Indicator_Timeout = 50 * AsConfig::FPS;
+	static const int Width = 12;
+	static const int Height = 30;
+	static const int Inner_Width = Width - 2;
+	static const int Inner_Height = Height - 2;
+	static const int Indicator_Timeout = AsConfig::FPS * 50;  // 50 секунд
 };
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-ï»¿#include "Platform_Laser.h"
+#include "Platform_Laser.h"
 
 // AsPlatform_Laser
 //------------------------------------------------------------------------------------------------------------
@@ -8,22 +8,21 @@ AsPlatform_Laser::~AsPlatform_Laser()
 }
 //------------------------------------------------------------------------------------------------------------
 AsPlatform_Laser::AsPlatform_Laser(AsPlatform_State &platform_state)
-	: Platform_State(&platform_state), Gun_Color(0), Inner_Color(0), Circle_Color(0), On_Fire(false),
-	Laser_Beams_Set(0), Laser_Finalize_Timer_Tick(0), Laser_Fire_Timer_Tick(0), Laser_Transformation_Step(0)
+	: Enable_Laser_Firing(false), Laser_Transformation_Step(0), Last_Laser_Shot_Tick(0), Platform_State(&platform_state),
+	Laser_Beam_Set(0), Circle_Color(0), Inner_Color(0), Gun_Color(0)
 {
 }
 //------------------------------------------------------------------------------------------------------------
-void AsPlatform_Laser::Init(AColor &inner_color, AColor &circle_color, AsLaser_Beam_Set *laser_beams_set)
+void AsPlatform_Laser::Init(AsLaser_Beam_Set *laser_beam_set, AColor &highlight_color, AColor &circle_color, AColor &inner_color)
 {
-	Inner_Color = &inner_color;
+	Laser_Beam_Set = laser_beam_set;
 	Circle_Color = &circle_color;
+	Inner_Color = &inner_color;
 
-	Laser_Beams_Set = laser_beams_set;
-
-	Gun_Color = new AColor(AsConfig::White_Color, AsConfig::Global_Scale);
+	Gun_Color = new AColor(highlight_color, AsConfig::Global_Scale);
 }
 //------------------------------------------------------------------------------------------------------------
-bool AsPlatform_Laser::Act(double platform_x_pos, EPlatform_State &next_state)
+bool AsPlatform_Laser::Act(EPlatform_State &next_state, double x_pos)
 {
 	double left_gun_x_pos, right_gun_x_pos;
 	next_state = EPlatform_State::Unknown;
@@ -34,31 +33,22 @@ bool AsPlatform_Laser::Act(double platform_x_pos, EPlatform_State &next_state)
 		if (Laser_Transformation_Step < Max_Laser_Transformation_Step)
 			++Laser_Transformation_Step;
 		else
-		{
 			Platform_State->Laser = EPlatform_Transformation::Active;
-			Laser_Finalize_Timer_Tick = AsConfig::Current_Timer_Tick + AsConfig::Platform_Laser_Timeout;
-		}
+
 		return true;
 
 
 	case EPlatform_Transformation::Active:
-		if (AsConfig::Current_Timer_Tick == Laser_Finalize_Timer_Tick)
+		if (Enable_Laser_Firing)
 		{
-			Platform_State->Laser = EPlatform_Transformation::Finalize;
-			return false;
-		}
-
-		if (On_Fire)
-		{
-			if (Laser_Fire_Timer_Tick <= AsConfig::Current_Timer_Tick)
+			if (Last_Laser_Shot_Tick + Laser_Shot_Timeout <= AsConfig::Current_Timer_Tick)
 			{
-				Laser_Fire_Timer_Tick = AsConfig::Current_Timer_Tick + AsConfig::Laser_Fire_Timeout;
+				Last_Laser_Shot_Tick = AsConfig::Current_Timer_Tick + Laser_Shot_Timeout;
 
-				left_gun_x_pos = Get_Gun_Pos(platform_x_pos, true);
-				right_gun_x_pos = Get_Gun_Pos(platform_x_pos, false);
+				left_gun_x_pos = Get_Gun_Pos(x_pos, true) + 0.5;
+				right_gun_x_pos = Get_Gun_Pos(x_pos, false) + 0.5;
 
-				if (Laser_Beams_Set != 0)
-					Laser_Beams_Set->Fire(left_gun_x_pos, right_gun_x_pos);
+				Laser_Beam_Set->Fire(left_gun_x_pos, right_gun_x_pos);
 			}
 		}
 		break;
@@ -69,126 +59,143 @@ bool AsPlatform_Laser::Act(double platform_x_pos, EPlatform_State &next_state)
 			--Laser_Transformation_Step;
 		else
 		{
-			Laser_Transformation_Step = 0;
 			Platform_State->Laser = EPlatform_Transformation::Unknown;
 			next_state = Platform_State->Set_State(EPlatform_Substate_Regular::Normal);
-			On_Fire = false;
+			Enable_Laser_Firing = false;
 		}
+
 		return true;
 
+
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 
 	return false;
 }
 //------------------------------------------------------------------------------------------------------------
-void AsPlatform_Laser::Draw_State(HDC hdc, double x_pos, RECT &curr_rect)
-{
+void AsPlatform_Laser::Draw_State(HDC hdc, double x_pos, RECT &platform_rect)
+{// Ðèñóåì ëàçåðíóþ ïëàòôîðìó
+
 	HRGN region;
 
-	region = CreateRectRgnIndirect(&curr_rect);
+	region = CreateRectRgnIndirect(&platform_rect);
 	SelectClipRgn(hdc, region);
 
-	// ÐºÑ€Ñ‹Ð»ÑŒÑ
+	// 1. Ëåâîå êðûëî
 	Draw_Laser_Wing(hdc, x_pos, true);
+
+	// 2. Ïðàâîå êðûëî
 	Draw_Laser_Wing(hdc, x_pos, false);
 
-	// Ñ†ÐµÐ½Ñ‚Ñ€Ð°Ð»ÑŒÐ½Ð°Ñ Ñ‡Ð°ÑÑ‚ÑŒ
+
+	// 3. Öåíòðàëüíàÿ ÷àñòü
+	// 3.0. Íîðìàëüíàÿ ñðåäíÿÿ ÷àñòü
+	Draw_Laser_Inner_Part(hdc, x_pos);
+
+	// 3.1. Ëåâàÿ íîãà
 	Draw_Laser_Leg(hdc, x_pos, true);
+
+	// 3.2. Ïðàâàÿ íîãà
 	Draw_Laser_Leg(hdc, x_pos, false);
 
-	// ÐºÐ°Ð±Ð¸Ð½Ð° 
+
+	// 3.3. Êàáèíà
 	Draw_Laser_Cabin(hdc, x_pos);
 
 	SelectClipRgn(hdc, 0);
 	DeleteObject(region);
 }
 //------------------------------------------------------------------------------------------------------------
-void AsPlatform_Laser::Fire(bool on_fire)
+void AsPlatform_Laser::Reset()
+{
+	Laser_Transformation_Step = 0;
+}
+//------------------------------------------------------------------------------------------------------------
+void AsPlatform_Laser::Fire(bool fire_on)
 {
 	if (Platform_State->Laser != EPlatform_Transformation::Active)
-		return;
+		return;  // Èãíîðèðóåì âûñòðåë, ïîêà ïëàòôîðìà íå ñôîðìèðóåòñÿ
 
-	On_Fire = on_fire;
+	Enable_Laser_Firing = fire_on;
 }
 //------------------------------------------------------------------------------------------------------------
 void AsPlatform_Laser::Draw_Laser_Wing(HDC hdc, double x_pos, bool is_left)
-{
-	int half_max_step;
-	double gun_height;
-	double x_1, y_1, y_2;
-	double right_part_x = 0.0;
-	double height_1, height_2;
-	double width_1, width_2;
-	const double d_scale = AsConfig::D_Global_Scale;
-	double ratio = (double)Laser_Transformation_Step / (double)Max_Laser_Transformation_Step;
+{// Ðèñóåì êðûëî ëàçåðíîé ïëàòôîðìû
 
-	// 1.0 ÐºÑ€Ñ‹Ð»Ð¾
+	double x, y;
+	int x_offset;
+	double height;
+	int half_max_step = Max_Laser_Transformation_Step / 2;
+	double ratio = (double)Laser_Transformation_Step / (double)Max_Laser_Transformation_Step;
+	const int scale = AsConfig::Global_Scale;
+	const double d_scale = AsConfig::D_Global_Scale;
+
+	y = AsConfig::Platform_Y_Pos;
+	x = x_pos;
+
+	if (! is_left)
+		x += AsConfig::Platform_Normal_Width - AsConfig::Platform_Circle_Size;
+
+	// 1. Ñàìî êðûëî
 	Circle_Color->Select(hdc);
 
-	// 1.1 ÑˆÐ¸Ñ€Ð¸Ð½Ð° ÑÐ»Ð»Ð¸Ð¿ÑÐ° Ð¸ ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ð° Ñ… Ð½Ðµ Ð¼ÐµÐ½ÑÑŽÑ‚ÑÑ
-	width_1 = (double)AsConfig::Platform_Circle_Diameter;
+	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x, y, 7, 7, ratio, x, y + 1, 7, 12);
 
+	// 2. Ïåðåìû÷êà
+	// Ïîçèöèÿ: (3 : 6) -> (5 : 2)
+	// Ðàçìåð: 1 x 1 -> 6 x 5
 	if (is_left)
-		x_1 = x_pos;
+		x_offset = 5;
 	else
-		x_1 = x_pos + (double)AsConfig::Platform_Normal_Width - (double)AsConfig::Platform_Circle_Diameter;
+		x_offset = -4;
 
-	// 1.2 ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ð° Ñƒ ÑÐ»Ð»Ð¸Ð¿ÑÐ° ÐºÑ€Ñ‹Ð»Ð° Ð¸Ð·Ð¼ÐµÐ½ÑÐµÑ‚ÑÑ [AsConfig::Platform_Y_Pos (Ð² Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒÐ½Ð¾Ð¼ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ð¸) ... y_1 + 1.0]
-	y_1 = (double)AsConfig::Platform_Y_Pos;
-	y_2 = y_1 + 1.0;
+	Draw_Expanding_Figure(hdc, EFigure_Type::Rectangle, x + 3, y + 6, 1, 1, ratio, x + x_offset, y + 2, 6, 5);
 
-	// 1.3 Ð²Ñ‹ÑÐ¾Ñ‚Ð° ÑÐ»Ð»Ð¸Ð¿ÑÐ° ÐºÑ€Ñ‹Ð»Ð° Ð¸Ð·Ð¼ÐµÐ½ÑÐµÑ‚ÑÑ [AsConfig::Platform_Circle_Diameter (Ð² Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒÐ½Ð¾Ð¼ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ð¸) ... 2 * AsConfig::Platform_Circle_Diameter]
-	height_1 = (double)AsConfig::Platform_Circle_Diameter;
-	height_2 = 2.0 * height_1;
 
-	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x_1, y_1, width_1, height_1, ratio, x_1, y_2, width_1, height_2);
-
-	// 2.0 Ð¿ÐµÑ€ÐµÐ¼Ñ‹Ñ‡ÐºÐ° ÐºÑ€Ñ‹Ð»Ð°
-	// 2.1 ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ð° Ñ… Ð¸ Ñƒ Ð½Ðµ Ð¼ÐµÐ½ÑÑŽÑ‚ÑÑ	
-	if (is_left)
-		x_1 = x_pos + 5.0;  // Ð»ÐµÐ²Ð°Ñ
-	else  // Ð¿Ñ€Ð°Ð²Ð°Ñ
-		x_1 = x_pos + (double)AsConfig::Platform_Normal_Width - 5.0 - 1.0 / d_scale;
-
-	y_1 = (double)AsConfig::Platform_Y_Pos + 2.0;
-
-	// 2.2 ÑˆÐ¸Ñ€Ð¸Ð½Ð° Ð¿Ñ€ÑÐ¼Ð¾ÑƒÐ³Ð¾Ð»ÑŒÐ½Ð¸ÐºÐ° ÑŒÐµÐ½ÑÐµÑ‚ÑÑ [ 0.0 ... width_2 ]
-	if (is_left)
-		width_2 = 6.0;
-	else
-		width_2 = -5.0 - 1.0 / d_scale;
-
-	// 2.2 Ð²Ñ‹ÑÐ¾Ñ‚Ð° Ð¿Ñ€ÑÐ¼Ð¾ÑƒÐ³Ð¾Ð»ÑŒÐ½Ð¸ÐºÐ° Ð¼ÐµÐ½ÑÐµÑ‚ÑÑ [ 0.0 ... (double)AsConfig::Platform_Circle_Diameter - 2.0 ]
-	height_2 = (double)AsConfig::Platform_Circle_Diameter - 2.0;
-
-	Draw_Expanding_Figure(hdc, EFigure_Type::Rectangle, x_1, y_1, 0.0, 0.0, ratio, x_1, y_1, width_2, height_2);
-
-	// 3.0 Ð»Ð°Ð·ÐµÑ€Ñ‹
-	Gun_Color->Select_Pen(hdc);
-	half_max_step = Max_Laser_Transformation_Step / 2;
-
+	// 3. Ïóøêà
 	if (Laser_Transformation_Step >= half_max_step)
 	{
 		ratio = (double)(Laser_Transformation_Step - half_max_step) / (double)half_max_step;
 
-		x_1 = Get_Gun_Pos(x_pos, is_left);
+		Gun_Color->Select(hdc);
 
-		y_1 = (double)AsConfig::Platform_Y_Pos + 3.0;
-		gun_height = 3.0 * d_scale;
+		//if (is_left)
+		//	x = x_pos + 3.0;
+		//else
+		//	x = x_pos + (AsConfig::Platform_Normal_Width - 4);
 
-		MoveToEx(hdc, (int)(x_1 * d_scale + 1.0), (int)(y_1 * d_scale) + 1, 0);
-		LineTo(hdc, (int)(x_1 * d_scale + 1.0), (int)(y_1 * d_scale - ratio * gun_height) + 1);
+		x = Get_Gun_Pos(x_pos, is_left);
 
-		Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x_1 + 1.0, y_1 + 3.0, 0.0, 0.0, ratio, x_1 - 1, y_1 + 2.0, 3.0, 6.0);
+		height = 3.0 * (1.0 - ratio) * d_scale;
+
+		MoveToEx(hdc, (int)(x * d_scale + 1.0), (int)(y * d_scale + 3.0 * d_scale + 1.0), 0);
+		LineTo(hdc, (int)(x * d_scale + 1.0), (int)(y * d_scale + height + 1.0) );
+
+		// 4. Õâîñò
+		Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x + 1, y + 5, 0, 0, ratio, x - 1, y + 5 + 1.0 / d_scale, 3, 6);
 	}
 }
 //------------------------------------------------------------------------------------------------------------
+void AsPlatform_Laser::Draw_Laser_Inner_Part(HDC hdc, double x)
+{// Ðèñóåì óìåíüøàþùóþñÿ ÷àñòü îáû÷íîé ïëàòôîðìû
+
+	double y;
+	double ratio = (double)Laser_Transformation_Step / (double)Max_Laser_Transformation_Step;
+
+	// Ðàçìåð: 20 x 5 --> 8 x 1
+	y = AsConfig::Platform_Y_Pos;
+
+	Inner_Color->Select(hdc);
+	Draw_Expanding_Figure(hdc, EFigure_Type::Round_Rect_3x, x + 4, y + 1, 20, 5, ratio, x + 10, y + 3, 8, 1);
+}
+//------------------------------------------------------------------------------------------------------------
 void AsPlatform_Laser::Draw_Laser_Leg(HDC hdc, double x_pos, bool is_left)
-{
+{// Ðèñóåì "íîãó" ëàçåðíîé ïëàòôîðìû
+
 	double x, y;
 	double x_scale;
+	//const int scale = AsConfig::Global_Scale;
 	const double d_scale = AsConfig::D_Global_Scale;
 	double ratio = (double)Laser_Transformation_Step / (double)Max_Laser_Transformation_Step;
 
@@ -201,7 +208,7 @@ void AsPlatform_Laser::Draw_Laser_Leg(HDC hdc, double x_pos, bool is_left)
 	}
 	else
 	{
-		x = x_pos * d_scale + (double)(AsConfig::Platform_Normal_Width - 6) * d_scale - 1.0;
+		x = x_pos * d_scale + (AsConfig::Platform_Normal_Width - 6) * d_scale - 1.0;
 		x_scale = -d_scale;
 	}
 
@@ -210,89 +217,96 @@ void AsPlatform_Laser::Draw_Laser_Leg(HDC hdc, double x_pos, bool is_left)
 	POINT left_leg_points[7] =
 	{
 		{ (int)x, (int)y }, { (int)(x + 2.0 * x_scale), (int)(y - 2 * d_scale) },
-		{ (int)(x + 4 * x_scale), (int)(y - 2 * d_scale) }, { (int)(x + 4 * x_scale), (int)y },
-		{ (int)(x + 2 * x_scale), (int)(y + 2 * d_scale) }, { (int)(x + 2 * x_scale), (int)(y + (2.0 + 2.0 * ratio) * d_scale) },
-		{ (int)x, (int)(y + 4.0 * ratio * d_scale) } 
+	{ (int)(x + 4 * x_scale), (int)(y - 2 * d_scale) }, { (int)(x + 4 * x_scale), (int)y },
+	{ (int)(x + 2 * x_scale), (int)(y + 2 * d_scale) }, { (int)(x + 2 * x_scale), (int)(y + (2.0 + 2.0 * ratio) * d_scale) },
+	{ (int)x, (int)(y + 4.0 * ratio * d_scale) } 
 	};
 
 	Polygon(hdc, left_leg_points, 7);
 }
 //------------------------------------------------------------------------------------------------------------
-void AsPlatform_Laser::Draw_Laser_Cabin(HDC hdc, double x_pos)
-{
-	double x, y;
-	double x_center;
+void AsPlatform_Laser::Draw_Laser_Cabin(HDC hdc, double x)
+{// Ðèñóåì êàáèíó ëàçåðíîé ïëàòôîðìû
+
+	double y;
+	const int scale = AsConfig::Global_Scale;
+	double one_pixel = 1.0 / AsConfig::D_Global_Scale;
 	double ratio = (double)Laser_Transformation_Step / (double)Max_Laser_Transformation_Step;
 
-	Inner_Color->Select(hdc);
-
-	// Ð Ð°Ð·Ð¼ÐµÑ€: [ 20 x 5 ... 8 x 1 ]
-	x = x_pos;
-	x_center = x_pos + (double)AsConfig::Platform_Normal_Width / 2.0;
 	y = AsConfig::Platform_Y_Pos;
 
+	// 1. Âíåøíÿÿ ÷àñòü
+	// Ðàçìåð: 2 x 1 --> 10 x 8
 	Inner_Color->Select(hdc);
-	Draw_Expanding_Figure(hdc, EFigure_Type::Round_Rect_3x, x + 4, y + 1, 20, 5, ratio, x + 10, y + 3, 8, 1);
+	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x + 13, y + 1, 2, 1, ratio, x + 9, y - 1, 10, 8 - one_pixel);
 
-	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x_center, y + 2, 0, 0, ratio, x + 7, y - 1, 14, 7);
-
+	// 2. Ñðåäíåå êîëüöî
+	// Ðàçìåð: 2 x 1 --> 8 x 6
 	AsConfig::BG_Color.Select(hdc);
-	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x_center, y + 2, 0, 0, ratio, x + 9, y - 1, 10, 5);
+	Draw_Expanding_Figure(hdc, EFigure_Type::Rectangle, x + 13, y + 1, 2, 1, ratio, x + 11, y, 6, 1);
+	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x + 13, y + 1, 2, 1, ratio, x + 10, y, 8, 5 - one_pixel);
 
+	// 3. Âíóòðåííÿÿ ÷àñòü
+	// Ðàçìåð: 2 x 1 --> 6 x 4
 	AsConfig::White_Color.Select(hdc);
-	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x_center, y + 2, 0, 0, ratio, x + 10, y, 8, 3);
+	Draw_Expanding_Figure(hdc, EFigure_Type::Ellipse, x + 13, y + 1, 2, 1, ratio, x + 11, y, 6, 4 - one_pixel);
 }
 //------------------------------------------------------------------------------------------------------------
 void AsPlatform_Laser::Draw_Expanding_Figure(HDC hdc, EFigure_Type figure_type, double start_x, double start_y, double start_width, double start_height, double ratio, double end_x, double end_y, double end_width, double end_height)
 {
-	double x, y;
-	double width, height;
-	const double d_scale = AsConfig::D_Global_Scale;
-	RECT rect{};
+	int x, y;
+	int width, height;
+	RECT rect;
 
-	x = Get_Expanding_Value( start_x, end_x, ratio);
-	y = Get_Expanding_Value( start_y, end_y, ratio);
-	width = Get_Expanding_Value( start_width, end_width, ratio);
-	height = Get_Expanding_Value( start_height, end_height, ratio);
-
-	rect.left = (int)(x * d_scale);
-	rect.top = (int)(y * d_scale);
-	rect.right = (int)( (x + width) * d_scale);
-	rect.bottom = (int)( (y + height) * d_scale);
+	x = Get_Expanding_Value(start_x, end_x, ratio);
+	y = Get_Expanding_Value(start_y, end_y, ratio);
+	width = Get_Expanding_Value(start_width, end_width, ratio);
+	height = Get_Expanding_Value(start_height, end_height, ratio);
 
 	switch (figure_type)
 	{
 	case EFigure_Type::Ellipse:
-		Ellipse(hdc, rect.left, rect.top, rect.right - 1, rect.bottom - 1);
+		Ellipse(hdc, x, y, x + width - 1, y + height);
 		break;
 
 	case EFigure_Type::Rectangle:
-		Rectangle(hdc, rect.left, rect.top, rect.right - 1, rect.bottom - 1);
+		Rectangle(hdc, x, y, x + width - 1, y + height);
 		break;
 
 	case EFigure_Type::Round_Rect_3x:
+		rect.left = x;
+		rect.top = y;
+		rect.right = x + width;
+		rect.bottom = y + height + 1;
+
 		AsTools::Round_Rect(hdc, rect, 3);
 		break;
 
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 }
 //------------------------------------------------------------------------------------------------------------
-double AsPlatform_Laser::Get_Expanding_Value(double start_value, double end_value, double ratio)
+int AsPlatform_Laser::Get_Expanding_Value(double start, double end, double ratio)
 {
-	double expanding_value;
+	int value;
+	double delta;
 
-	expanding_value = start_value + (end_value - start_value) * ratio;
+	delta = end - start;
+	value = (int)( (start + delta * ratio) * AsConfig::D_Global_Scale);
 
-	return expanding_value;
+	return value;
 }
 //------------------------------------------------------------------------------------------------------------
 double AsPlatform_Laser::Get_Gun_Pos(double platform_x_pos, bool is_left)
 {
+	double gun_x_pos;
+
 	if (is_left)
-		return platform_x_pos + 3.0;
+		gun_x_pos = platform_x_pos + 3.0;
 	else
-		return platform_x_pos + (double)AsConfig::Platform_Normal_Width - 4.0;
+		gun_x_pos = platform_x_pos + (AsConfig::Platform_Normal_Width - 4);
+
+	return gun_x_pos;
 }
 //------------------------------------------------------------------------------------------------------------

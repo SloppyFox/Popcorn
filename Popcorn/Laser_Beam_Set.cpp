@@ -1,9 +1,9 @@
-п»ї#include "Laser_Beam_Set.h"
+#include "Laser_Beam_Set.h"
 
 // AsLaser_Beam_Set
 //------------------------------------------------------------------------------------------------------------
 AsLaser_Beam_Set::AsLaser_Beam_Set()
-: Laser_Beams(AsConfig::Max_Laser_Beams_Count)
+: Laser_Beams(Max_Laser_Beam_Count)
 {
 }
 //------------------------------------------------------------------------------------------------------------
@@ -11,42 +11,41 @@ void AsLaser_Beam_Set::Fire(double left_gun_x_pos, double right_gun_x_pos)
 {
 	ALaser_Beam *left_beam = 0, *right_beam = 0;
 
-	for (auto &curr_beam : Laser_Beams)
+	for (auto &beam : Laser_Beams)
 	{
-		if (curr_beam.Get_State() != ELaser_Beam_State::Disable)
+		if (beam.Is_Active() )
 			continue;
 
 		if (left_beam == 0)
-			left_beam = &curr_beam;
-		else if (right_beam == 0)
-		{
-			right_beam = &curr_beam;
-			break;
-		}
+			left_beam = &beam;
+		else
+			if (right_beam == 0)
+			{
+				right_beam = &beam;
+				break;
+			}
 	}
 
-	if (left_beam != 0)
-		left_beam->Set_On_Gun(left_gun_x_pos);
-	if (right_beam != 0)
-		right_beam->Set_On_Gun(right_gun_x_pos);
-
 	if (left_beam == 0 || right_beam == 0)
-		AsTools::Throw();
+		AsConfig::Throw();  // Не хватило "свободных" лазерных лучей!
+
+	left_beam->Set_At(left_gun_x_pos, AsConfig::Platform_Y_Pos - 1);
+	right_beam->Set_At(right_gun_x_pos, AsConfig::Platform_Y_Pos - 1);
 }
 //------------------------------------------------------------------------------------------------------------
 void AsLaser_Beam_Set::Disable_All()
 {
-	for (auto &curr_beam : Laser_Beams)
-		curr_beam.Disable();
+	for (auto &beam : Laser_Beams)
+		beam.Disable();
 }
 //------------------------------------------------------------------------------------------------------------
-bool AsLaser_Beam_Set::Get_Next_Obj(int &index, AGame_Object **game_obj)
+bool AsLaser_Beam_Set::Get_Next_Game_Object(int &index, AGame_Object **game_obj)
 {
 	if (index < 0 || index >= (int)Laser_Beams.size() )
 		return false;
 
 	*game_obj = &Laser_Beams[index++];
-	
+
 	return true;
 }
 //------------------------------------------------------------------------------------------------------------

@@ -1,11 +1,12 @@
-п»ї#include "Falling_Letter.h"
+#include "Falling_Letter.h"
 
 // AFalling_Letter
-const int AFalling_Letter::Letters_Popularity[ (int)ELetter_Type::Count] = { 7, 7, 7, 7, 7, 7, 7,  3, 3, 3,  1 };
-int AFalling_Letter::Sum_Letters_Popularity;
+int AFalling_Letter::All_Letters_Popularity;
+int AFalling_Letter::Letters_Popularity[ (int)ELetter_Type::Max] = { 7, 7, 7, 7, 7, 7, 7,  3, 3, 3,  1 };
 //------------------------------------------------------------------------------------------------------------
 AFalling_Letter::AFalling_Letter(EBrick_Type brick_type, ELetter_Type letter_type, int x, int y)
-	: Falling_Letter_State(EFalling_Letter_State::Normal), Got_Hit(false), Brick_Type(brick_type), Letter_Type(letter_type), Is_Lost(false), X(x * AsConfig::Global_Scale), Y(y * AsConfig::Global_Scale), Rotation_Step(0), Next_Rotation_Tick(AsConfig::Current_Timer_Tick + Ticks_Per_Animation_Step)
+: Brick_Type(brick_type), Letter_Type(letter_type), Falling_Letter_State(EFalling_Letter_State::Normal), X(x), Y(y), Rotation_Step(2),
+  Next_Rotation_Tick(AsConfig::Current_Timer_Tick + Ticks_Per_Step)
 {
 	Letter_Cell.left = X;
 	Letter_Cell.top = Y;
@@ -20,9 +21,9 @@ void AFalling_Letter::Act()
 	if (Falling_Letter_State != EFalling_Letter_State::Normal)
 		return;
 
-	if (Letter_Cell.top >= AsConfig::Play_Area_Max_Y_Offset * AsConfig::Global_Scale)
+	if (Letter_Cell.top >= AsConfig::Max_Y_Pos * AsConfig::Global_Scale)
 	{
-		Destroy();
+		Finalize();
 		return;
 	}
 
@@ -34,8 +35,8 @@ void AFalling_Letter::Act()
 
 	if (AsConfig::Current_Timer_Tick >= Next_Rotation_Tick)
 	{
-		Next_Rotation_Tick += Ticks_Per_Animation_Step;
 		++Rotation_Step;
+		Next_Rotation_Tick += Ticks_Per_Step;
 	}
 
 	AsTools::Invalidate_Rect(Prev_Letter_Cell);
@@ -46,6 +47,7 @@ void AFalling_Letter::Clear(HDC hdc, RECT &paint_area)
 {
 	RECT intersection_rect;
 
+	// Стираем предыдущее изображение
 	if (! IntersectRect(&intersection_rect, &paint_area, &Prev_Letter_Cell) )
 		return;
 
@@ -56,9 +58,9 @@ void AFalling_Letter::Draw(HDC hdc, RECT &paint_area)
 {
 	RECT intersection_rect;
 
-	if (Falling_Letter_State == EFalling_Letter_State::Have_To_Destroy)
+	if (Falling_Letter_State == EFalling_Letter_State::Finalizing)
 	{
-		Falling_Letter_State = EFalling_Letter_State::Destroed;
+		Falling_Letter_State = EFalling_Letter_State::Finished;
 		return;
 	}
 
@@ -68,21 +70,20 @@ void AFalling_Letter::Draw(HDC hdc, RECT &paint_area)
 //------------------------------------------------------------------------------------------------------------
 bool AFalling_Letter::Is_Finished()
 {
-	if (Falling_Letter_State == EFalling_Letter_State::Destroed)
+	if (Falling_Letter_State == EFalling_Letter_State::Finished)
 		return true;
 	else
 		return false;
 }
 //------------------------------------------------------------------------------------------------------------
-void AFalling_Letter::Get_Cell(RECT &rect) const
+void AFalling_Letter::Get_Letter_Cell(RECT &rect)
 {
 	rect = Letter_Cell;
 }
 //------------------------------------------------------------------------------------------------------------
-void AFalling_Letter::Destroy()
-{	
-	Falling_Letter_State = EFalling_Letter_State::Have_To_Destroy;
-
+void AFalling_Letter::Finalize()
+{
+	Falling_Letter_State = EFalling_Letter_State::Finalizing;
 	AsTools::Invalidate_Rect(Prev_Letter_Cell);
 	AsTools::Invalidate_Rect(Letter_Cell);
 }
@@ -92,36 +93,50 @@ void AFalling_Letter::Show_Full_Size()
 	Rotation_Step = 8;
 }
 //------------------------------------------------------------------------------------------------------------
+void AFalling_Letter::Test_Draw_All_Steps(HDC hdc)
+{
+	int i;
+	int x_step = AsConfig::Cell_Width * AsConfig::Global_Scale;
+
+	Rotation_Step = 0;
+
+	for (i = 0; i < Max_Rotation_Step; i++)
+	{
+		Draw_Brick_Letter(hdc);
+
+		++Rotation_Step;
+		X += x_step;
+		Letter_Cell.left += x_step;
+		Letter_Cell.right += x_step;
+	}
+}
+//------------------------------------------------------------------------------------------------------------
 void AFalling_Letter::Init()
 {
 	int i;
 
-	Sum_Letters_Popularity = 0;
+	All_Letters_Popularity = 0;
 
-	for (i = 0; i < (int)ELetter_Type::Count; i++)
-		Sum_Letters_Popularity += Letters_Popularity[i];
+	for (i = 0; i < (int)ELetter_Type::Max; i++)
+		All_Letters_Popularity += Letters_Popularity[i];
 }
 //------------------------------------------------------------------------------------------------------------
 ELetter_Type AFalling_Letter::Get_Random_Letter_Type()
 {
 	int i;
-	int rand_letter_popularity;
-	ELetter_Type letter_type;
+	int letters_popularity;
 
-	rand_letter_popularity = AsTools::Rand(Sum_Letters_Popularity);
+	letters_popularity = AsTools::Rand(All_Letters_Popularity);
 
-	for (i = 0; i < (int)ELetter_Type::Count; i++)
+	for (i = 0; i < (int)ELetter_Type::Max; i++)
 	{
-		if (rand_letter_popularity < Letters_Popularity[i])
-		{
-			letter_type = (ELetter_Type) i;
-			return letter_type;
-		}
+		if (letters_popularity < Letters_Popularity[i])
+			return (ELetter_Type)i;
 
-		rand_letter_popularity -= Letters_Popularity[i];
+		letters_popularity -= Letters_Popularity[i];
 	}
 
-	return ELetter_Type::C;
+	return ELetter_Type::O;
 }
 //------------------------------------------------------------------------------------------------------------
 void AFalling_Letter::Set_Brick_Letter_Colors(bool is_switch_color, const AColor **front_color, const AColor **back_color)
@@ -139,20 +154,20 @@ void AFalling_Letter::Set_Brick_Letter_Colors(bool is_switch_color, const AColor
 }
 //------------------------------------------------------------------------------------------------------------
 void AFalling_Letter::Draw_Brick_Letter(HDC hdc)
-{
+{// Вывод падающей буквы
+
 	bool switch_color;
 	double offset;
-	double rotation_angle;
+	double rotation_angle;  // Преобразование шага в угол поворота
 	double y_ratio;
 	int back_part_offset;
-	int center_letter_x, left_letter_x, right_letter_x, top_letter_y, bottom_letter_y;
-	const int scale = AsConfig::Global_Scale;
 	const AColor *front_color, *back_color;
-	XFORM xform{}, old_xform;
+	XFORM xform, old_xform;
 
-	if (!(Brick_Type == EBrick_Type::Blue || Brick_Type == EBrick_Type::Red))
-		return;
+	if (! (Brick_Type == EBrick_Type::Blue || Brick_Type == EBrick_Type::Red))
+		return;  // Падающие буквы могут быть только от кирпичей такого типа
 
+	// Корректируем шаг вращения и угол поворота
 	Rotation_Step = Rotation_Step % Max_Rotation_Step;
 
 	if (Rotation_Step < 8)
@@ -180,14 +195,17 @@ void AFalling_Letter::Draw_Brick_Letter(HDC hdc)
 
 	if (Rotation_Step == 4 || Rotation_Step == 12)
 	{
+		// Выводим фон
 		back_color->Select(hdc);
-		RoundRect(hdc, X, Y + Brick_Half_Height - scale, X + AsConfig::Brick_Width * scale - 1, Y + Brick_Half_Height, 2 * scale, 3 * scale);
+		Rectangle(hdc, X, Y + Brick_Half_Height - AsConfig::Global_Scale, X + AsConfig::Brick_Width * AsConfig::Global_Scale, Y + Brick_Half_Height);
 
+		// Выводим передний план
 		front_color->Select(hdc);
-		RoundRect(hdc, X, Y + Brick_Half_Height, X + AsConfig::Brick_Width * scale - 1, Y + Brick_Half_Height + scale - 1, 2 * scale, 3 * scale);
+		Rectangle(hdc, X, Y + Brick_Half_Height, X + AsConfig::Brick_Width * AsConfig::Global_Scale, Y + Brick_Half_Height + AsConfig::Global_Scale - 1);
 	}
 	else
 	{
+		// Настраиваем матрицу "переворота" буквы
 		y_ratio = cos(rotation_angle);
 
 		xform.eM11 = 1.0f;
@@ -199,92 +217,90 @@ void AFalling_Letter::Draw_Brick_Letter(HDC hdc)
 		GetWorldTransform(hdc, &old_xform);
 		SetWorldTransform(hdc, &xform);
 
-		offset = 3.0 * (1.0 - fabs(xform.eM22) ) * AsConfig::D_Global_Scale;
+		// Выводим фон
+		back_color->Select(hdc);
+
+		offset = 3.0 * (1.0 - fabs(xform.eM22)) * AsConfig::D_Global_Scale;
 		back_part_offset = (int)round(offset);
 
 		if (y_ratio < 0.0)
 			back_part_offset = -back_part_offset;
 
-		back_color->Select(hdc);
-		RoundRect(hdc, 0, -Brick_Half_Height - back_part_offset, AsConfig::Brick_Width * scale - 1, Brick_Half_Height - back_part_offset, 2 * scale, 3 * scale);
+		Rectangle(hdc, 0, -Brick_Half_Height - back_part_offset, AsConfig::Brick_Width * AsConfig::Global_Scale - 1, Brick_Half_Height - back_part_offset);
 
+		// Выводим передний план
 		front_color->Select(hdc);
-		RoundRect(hdc, 0, -Brick_Half_Height, AsConfig::Brick_Width * scale - 1, Brick_Half_Height, 2 * scale, 2 * scale);
+
+		Rectangle(hdc, 0, -Brick_Half_Height, AsConfig::Brick_Width * AsConfig::Global_Scale - 1, Brick_Half_Height);
 
 		if (Rotation_Step > 4 && Rotation_Step <= 12)
 		{
-			AsConfig::Symbol_Color.Select_Pen(hdc);
+			AsConfig::Letter_Color.Select_Pen(hdc);
 
-			center_letter_x = 7 * scale + 1;
-			left_letter_x = 5 * scale;
-			right_letter_x = 10 * scale - 1;
-			top_letter_y = 1 * scale - Brick_Half_Height;
-			bottom_letter_y = 6 * scale - Brick_Half_Height - 1;
-
-			switch(Letter_Type)
+			switch (Letter_Type)
 			{
-			case ELetter_Type::C:
-				Arc(hdc, left_letter_x, top_letter_y, right_letter_x + 1, bottom_letter_y, right_letter_x, top_letter_y - 2 * scale, right_letter_x, bottom_letter_y + 3 * scale);
+			case ELetter_Type::O:  // "Отмена"
+				Ellipse(hdc, 0 + 5 * AsConfig::Global_Scale, 1 * AsConfig::Global_Scale - Brick_Half_Height, 0 + 10 * AsConfig::Global_Scale, 6 * AsConfig::Global_Scale - Brick_Half_Height - 1);
 				break;
 
-			case ELetter_Type::I:
-				Draw_Line(hdc, center_letter_x, top_letter_y, center_letter_x, bottom_letter_y);
-				Draw_Line(hdc, center_letter_x - 2 * scale, top_letter_y, center_letter_x + 2 * scale, top_letter_y);
-				Draw_Line(hdc, center_letter_x - 2 * scale, bottom_letter_y, center_letter_x + 2 * scale, bottom_letter_y);
+			case ELetter_Type::I:  // "Инверсия"
+				Draw_Line(hdc, 5, 1, 5, 6);
+				Draw_Line_To(hdc, 9, 1);
+				Draw_Line_To(hdc, 9, 6);
 				break;
 
-			case ELetter_Type::V:
-				Draw_Line(hdc, left_letter_x, top_letter_y, center_letter_x, bottom_letter_y);
-				LineTo(hdc, right_letter_x, top_letter_y);
+			case ELetter_Type::C:  // "Скорость"
+				Draw_C(hdc);
 				break;
 
-			case ELetter_Type::M:
-				Draw_Line(hdc, left_letter_x, bottom_letter_y, left_letter_x, top_letter_y);
-				LineTo(hdc, center_letter_x, 0);
-				LineTo(hdc, right_letter_x, top_letter_y);
-				LineTo(hdc, right_letter_x, bottom_letter_y);
+			case ELetter_Type::M:  // "Монстры"
+				Draw_Line(hdc, 5, 6, 5, 1);
+				Draw_Line_To(hdc, 7, 3);
+				Draw_Line_To(hdc, 9, 1);
+				Draw_Line_To(hdc, 9, 6);
 				break;
 
-			case ELetter_Type::Plus:
-				Draw_Line(hdc, center_letter_x, top_letter_y, center_letter_x, bottom_letter_y);
-				Draw_Line(hdc, left_letter_x, 0, right_letter_x, 0);
+			case ELetter_Type::G:  // "Жизнь"
+				Draw_Line(hdc, 7, 1, 7, 6);
+				Draw_Line(hdc, 5, 3, 9, 3);
+				Draw_Line(hdc, 4, 1, 5, 3);
+				Draw_Line(hdc, 5, 3, 4, 6);
+				Draw_Line(hdc, 10, 1, 9, 3);
+				Draw_Line(hdc, 9, 3, 10, 6);
 				break;
 
-			case ELetter_Type::L:
-				Draw_Line(hdc, left_letter_x, top_letter_y, left_letter_x, bottom_letter_y);
-				LineTo(hdc, right_letter_x, bottom_letter_y);
+			case ELetter_Type::K:  // "Клей"
+				Draw_Line(hdc, 5, 1, 5, 6);
+				Draw_Line(hdc, 5, 5, 9, 1);
+				Draw_Line(hdc, 7, 4, 9, 6);
 				break;
 
-			case ELetter_Type::G:
-				Arc(hdc, left_letter_x, top_letter_y, right_letter_x + 1, bottom_letter_y, right_letter_x, top_letter_y - 2 * scale, right_letter_x, bottom_letter_y + 2 * scale);
-				Draw_Line(hdc, right_letter_x - scale, bottom_letter_y, right_letter_x - scale, 0);
+			case ELetter_Type::W:  // "Шире"
+				Draw_Line(hdc, 4, 1, 4, 6);
+				Draw_Line_To(hdc, 10, 6);
+				Draw_Line_To(hdc, 10, 1);
+				Draw_Line(hdc, 7, 1, 7, 6);
 				break;
 
-			case ELetter_Type::W:
-				Draw_Line(hdc, left_letter_x, top_letter_y, left_letter_x, bottom_letter_y);
-				LineTo(hdc, center_letter_x, 0);
-				LineTo(hdc, right_letter_x, bottom_letter_y);
-				LineTo(hdc, right_letter_x, top_letter_y);
+			case ELetter_Type::P:  // "Пол"
+				Draw_Line(hdc, 5, 6, 5, 1);
+				Draw_Line_To(hdc, 9, 1);
+				Draw_Line_To(hdc, 9, 6);
 				break;
 
-			case ELetter_Type::F:
-				Draw_Line(hdc, left_letter_x + scale, bottom_letter_y, left_letter_x + scale, top_letter_y);
-				LineTo(hdc, right_letter_x, top_letter_y);
-				Draw_Line(hdc, left_letter_x + scale, 0, center_letter_x + scale, 0);
+			case ELetter_Type::L:  // "Лазер"
+				Draw_Line(hdc, 5, 6, 7, 1);
+				Draw_Line_To(hdc, 9, 6);
 				break;
 
-			case ELetter_Type::T:
-				Draw_Line(hdc, center_letter_x, bottom_letter_y, center_letter_x, top_letter_y);
-				Draw_Line(hdc, left_letter_x, top_letter_y, right_letter_x, top_letter_y);
+			case ELetter_Type::T:  // "Три"
+				Draw_Line(hdc, 5, 1, 9, 1);
+				Draw_Line(hdc, 7, 1, 7, 6);
 				break;
 
-			case ELetter_Type::N:
-				Draw_Line(hdc, left_letter_x, bottom_letter_y, left_letter_x, top_letter_y);
-				LineTo(hdc, right_letter_x, bottom_letter_y);
-				LineTo(hdc, right_letter_x, top_letter_y);
-				break;
-
-			default:
+			case ELetter_Type::Plus:  // Переход на следующий уровень
+				Draw_Line(hdc, 7, 1, 7, 5);
+				Draw_Line(hdc, 5, 3, 9, 3);
 				break;
 			}
 		}
@@ -293,9 +309,40 @@ void AFalling_Letter::Draw_Brick_Letter(HDC hdc)
 	}
 }
 //------------------------------------------------------------------------------------------------------------
+void AFalling_Letter::Draw_C(HDC hdc)
+{
+	int arc_x = 5 * AsConfig::Global_Scale;
+	int arc_y = 1 * AsConfig::Global_Scale - Brick_Half_Height;
+	int arc_size = 5 * AsConfig::Global_Scale - 1;
+
+	Arc(hdc, arc_x, arc_y, arc_x + arc_size, arc_y + arc_size, arc_x + arc_size, arc_y, arc_x + arc_size, arc_y + arc_size);
+}
+//------------------------------------------------------------------------------------------------------------
 void AFalling_Letter::Draw_Line(HDC hdc, int x_1, int y_1, int x_2, int y_2)
 {
-	MoveToEx(hdc, x_1, y_1, 0);
-	LineTo(hdc, x_2, y_2);
+	int start_y, end_y;
+
+	start_y = y_1 * AsConfig::Global_Scale - Brick_Half_Height;
+
+	if (y_1 == 6)
+		--start_y;
+
+	end_y = y_2 * AsConfig::Global_Scale - Brick_Half_Height;
+
+	if (y_2 == 6)
+		--end_y;
+
+	MoveToEx(hdc, x_1 * AsConfig::Global_Scale + 1, start_y, 0);
+	LineTo(hdc, x_2 * AsConfig::Global_Scale + 1, end_y);
+}
+//------------------------------------------------------------------------------------------------------------
+void AFalling_Letter::Draw_Line_To(HDC hdc, int x, int y)
+{
+	int end_y = y * AsConfig::Global_Scale - Brick_Half_Height;
+
+	if (y == 6)
+		--end_y;
+
+	LineTo(hdc, x * AsConfig::Global_Scale + 1, end_y);
 }
 //------------------------------------------------------------------------------------------------------------

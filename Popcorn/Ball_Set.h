@@ -2,7 +2,7 @@
 
 #include "Ball.h"
 
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 class AsBall_Set: public AGame_Objects_Set
 {
 public:
@@ -10,21 +10,22 @@ public:
 
 	virtual void Act();
 
-	void Set_On_Platform(double platform_x_pos);
 	void Release_From_Platform(double platform_x_pos);
-	bool Release_From_Glue_Platform();
-	bool Are_All_Balls_Lost();
+	bool Release_Next_Ball();
+	void Set_On_Platform(double platform_x_pos);
+	bool All_Balls_Are_Lost();
 	void Set_For_Test();
 	bool Is_Test_Finished();
 	void Triple_Balls();
-	void Inverse_Direction_Balls();
+	void Inverse_Balls();
 	void Accelerate();
 	void Reset_Speed();
-	void Forced_Advance(double offset);
+	void On_Platform_Advance(double direction, double platform_speed, double max_speed);
 
 private:
-	virtual bool Get_Next_Obj(int &index, AGame_Object **game_obj);
+	void Turn_Tripled_Ball(ABall *ball, bool add_min_angle);
+	virtual bool Get_Next_Game_Object(int &index, AGame_Object **game_obj);
 
 	std::vector<ABall> Balls;
 };
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

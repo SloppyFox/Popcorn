@@ -11,16 +11,14 @@
 //------------------------------------------------------------------------------------------------------------
 enum class EBall_State: unsigned char
 {
-	Disabled,
+	Disabled,  // Отключён (не рисуется, не перемещается и не взаимодействует)
 
 	Normal,
 	Lost,
 	On_Platform,
-	On_Glue_Platform,
-	On_Parashute,
-	Off_Parashute,
-	Teleporting_Stage_1,
-	Teleporting_Stage_2
+	On_Parachute,
+	Off_Parachute,
+	Teleporting
 };
 //------------------------------------------------------------------------------------------------------------
 class ABall_Object
@@ -31,8 +29,8 @@ public:
 	virtual EBall_State Get_State() = 0;
 	virtual void Set_State(EBall_State new_state, double x_pos = 0, double y_pos = 0) = 0;
 	virtual void Reflect(bool from_horizontal) = 0;
-	virtual void Draw_Teleporting(HDC hdc, int step) = 0; 
-	virtual void Set_On_Parachute(int brick_y, int brick_x) = 0;
+	virtual void Draw_Teleporting(HDC hdc, int step) = 0;
+	virtual void Set_On_Parachute(int brick_x, int brick_y) = 0;
 	virtual void Get_Center(double &x_pos, double &y_pos) = 0;
 	virtual bool Is_Moving_Up() = 0;
 	virtual bool Is_Moving_Left() = 0;
@@ -42,14 +40,11 @@ class AMover
 {
 public:
 	virtual ~AMover();
-	AMover();
 
 	virtual void Begin_Movement() = 0;
 	virtual void Finish_Movement() = 0;
 	virtual void Advance(double max_speed) = 0;
 	virtual double Get_Speed() = 0;
-
-	double Speed;
 };
 //------------------------------------------------------------------------------------------------------------
 class AGraphics_Object
@@ -81,7 +76,7 @@ public:
 	virtual bool Is_Finished();
 
 protected:
-	virtual bool Get_Next_Obj(int &index, AGame_Object **game_obj) = 0;
+	virtual bool Get_Next_Game_Object(int &index, AGame_Object **game_obj) = 0;
 };
 //------------------------------------------------------------------------------------------------------------
 class AString
@@ -100,16 +95,16 @@ private:
 //------------------------------------------------------------------------------------------------------------
 enum class EMessage_Type: unsigned char
 {
-	Floor_Is_Ends,
-	Unfreeze_Monster
+	Floor_Is_Over,
+	Unfreeze_Monsters
 };
 //------------------------------------------------------------------------------------------------------------
 class AMessage
 {
 public:
 	AMessage(EMessage_Type message_type);
-	
-	const EMessage_Type Type;
+
+	const EMessage_Type Message_Type;
 };
 //------------------------------------------------------------------------------------------------------------
 class AsMessage_Manager
@@ -119,6 +114,6 @@ public:
 	static bool Get_Message(AMessage **message);
 
 private:
-	static std::queue<AMessage *> Message_Queue;
+	static std::queue<AMessage *> Messages_Queue;
 };
 //------------------------------------------------------------------------------------------------------------

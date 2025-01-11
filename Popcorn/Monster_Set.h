@@ -3,12 +3,13 @@
 #include "Border.h"
 #include "Monster.h"
 
+//------------------------------------------------------------------------------------------------------------
 enum class EMonster_Set_State: unsigned char
 {
 	Idle,
-	Select_Next_Gate,
-	Waitinig_For_Open_Gate,
-	Waitinig_For_Close_Gate
+	Selecting_Next_Gate,
+	Waiting_Gate_Opening,
+	Waiting_Gate_Closing
 };
 //------------------------------------------------------------------------------------------------------------
 class AsMonster_Set: public AHit_Checker, public AGame_Objects_Set
@@ -24,21 +25,21 @@ public:
 	virtual void Act();
 
 	void Init(AsBorder *border);
+	void Emit_At_Gate(int gate_index);
 	void Activate(int max_alive_monsters_count);
-	void Let_Out(int gate_index);
 	void Destroy_All();
-	void Set_Freeze_State(bool is_freeze);
+	void Set_Freeze_State(bool freeze);
 
 private:
-	virtual bool Get_Next_Obj(int &index, AGame_Object **game_obj);
+	bool Get_Next_Game_Object(int &index, AGame_Object **game_obj);
 
 	EMonster_Set_State Monster_Set_State;
-
 	bool Is_Frozen;
-	int Current_Gate;
+	int Current_Gate_Index;
 	int Max_Alive_Monsters_Count;
-
 	AsBorder *Border;  // UNO
+
+	static const int Max_Monsters_Count = 10;
 
 	std::vector<AMonster *> Monsters;
 };

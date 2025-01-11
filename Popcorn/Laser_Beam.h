@@ -2,11 +2,13 @@
 
 #include "Config.h"
 
+//------------------------------------------------------------------------------------------------------------
 enum class ELaser_Beam_State: unsigned char
 {
-	Disable,
+	Disabled,
 	Active,
-	Finalize
+	Stopping,
+	Cleanup
 };
 //------------------------------------------------------------------------------------------------------------
 class ALaser_Beam: public AGame_Object
@@ -24,8 +26,8 @@ public:
 	virtual void Draw(HDC hdc, RECT &paint_area);
 	virtual bool Is_Finished();
 
-	void Set_On_Gun(double x_pos);
-	ELaser_Beam_State Get_State() const;
+	void Set_At(double x_pos, double y_pos);
+	bool Is_Active();
 	void Disable();
 
 	static AHit_Checker_List Hit_Checker_List;
@@ -34,13 +36,11 @@ private:
 	void Redraw_Beam();
 
 	ELaser_Beam_State Laser_Beam_State;
-
 	double X_Pos, Y_Pos;
 	double Speed;
-
 	RECT Beam_Rect, Prev_Beam_Rect;
 
-	static const int Beam_Width = 1;
-	static const int Beam_Height = 2;
+	static const int Width = 1;
+	static const int Height = 3;
 };
 //------------------------------------------------------------------------------------------------------------

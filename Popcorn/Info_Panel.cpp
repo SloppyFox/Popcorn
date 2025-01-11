@@ -1,13 +1,16 @@
-п»ї#include "Info_Panel.h"
+#include "Info_Panel.h"
 
 // AsInfo_Panel
 int AsInfo_Panel::Score = 0;
-RECT AsInfo_Panel::Score_Rect{};
-//-----------------------------------------------------------------------------------------------------------
+RECT AsInfo_Panel::Logo_Rect;
+RECT AsInfo_Panel::Data_Rect;
+//------------------------------------------------------------------------------------------------------------
 AsInfo_Panel::~AsInfo_Panel()
 {
 	delete Shadow_Color;
 	delete Highlight_Color;
+	delete Dark_Blue;
+	delete Dark_Red;
 
 	if (Logo_Pop_Font != 0)
 		DeleteObject(Logo_Pop_Font);
@@ -15,105 +18,165 @@ AsInfo_Panel::~AsInfo_Panel()
 	if (Logo_Corn_Font != 0)
 		DeleteObject(Logo_Corn_Font);
 
-	if (Player_Name_Font != 0)
-		DeleteObject(Player_Name_Font);
+	if (Name_Font != 0)
+		DeleteObject(Name_Font);
+
+	if (Score_Font != 0)
+		DeleteObject(Score_Font);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 AsInfo_Panel::AsInfo_Panel()
-: Extra_Lives_Count(AsConfig::Initial_Life_Count), Shadow_Color(0), Highlight_Color(0), Logo_Pop_Font(0), Logo_Corn_Font(0), Player_Name_Font(0),
-  Letter_F(EBrick_Type::Blue, ELetter_Type::F, 216, 155),
-  Letter_M(EBrick_Type::Blue, ELetter_Type::M, 296, 155),
-  Letter_Plus(EBrick_Type::Blue, ELetter_Type::Plus, 256, 155), Player_Name(L"COMPUTER"),
-  Floor_Indicator(EMessage_Type::Floor_Is_Ends, Indicators_Panel_X_Pos + 9, Indicators_Panel_Y_Pos + 56),
-  Monster_Indicator(EMessage_Type::Unfreeze_Monster, Indicators_Panel_X_Pos + 89, Indicators_Panel_Y_Pos + 56)
+: Extra_Lives_Count(AsConfig::Initial_Life_Count), Logo_Pop_Font(0), Logo_Corn_Font(0), Name_Font(0), Score_Font(0), Shadow_Color(0), Highlight_Color(0), Dark_Blue(0), Dark_Red(0),
+  Letter_P(EBrick_Type::Blue, ELetter_Type::P, 214 * AsConfig::Global_Scale + 1, 153 * AsConfig::Global_Scale),
+  Letter_G(EBrick_Type::Blue, ELetter_Type::G, 256 * AsConfig::Global_Scale, 153 * AsConfig::Global_Scale),
+  Letter_M(EBrick_Type::Blue, ELetter_Type::M, 297 * AsConfig::Global_Scale - 1, 153 * AsConfig::Global_Scale),
+  Floor_Indicator(EMessage_Type::Floor_Is_Over, Score_X + 8, Score_Y + Indicator_Y_Offset),
+  Monster_Indicator(EMessage_Type::Unfreeze_Monsters, Score_X + 90, Score_Y + Indicator_Y_Offset)
 {
 	const int scale = AsConfig::Global_Scale;
 
-	Logo_Rect.left = Logo_X_Pos * scale;
-	Logo_Rect.top = Logo_Y_Pos * scale;
+	//Choose_Font();
+
+	Logo_Rect.left = Score_X * scale;
+	Logo_Rect.top = 5 * scale;
 	Logo_Rect.right = Logo_Rect.left + 104 * scale;
 	Logo_Rect.bottom = Logo_Rect.top + 100 * scale;
 
-	Indicators_Panel_Rect.left = (Indicators_Panel_X_Pos + 2) * scale;
-	Indicators_Panel_Rect.top = (Indicators_Panel_Y_Pos + 2) * scale;
-	Indicators_Panel_Rect.right = Indicators_Panel_Rect.left + (Indicators_Panel_Width - 4) * scale;
-	Indicators_Panel_Rect.bottom = Indicators_Panel_Rect.top + (Indicators_Panel_Heigth - 4) * scale;
+	Data_Rect.left = Score_X * scale;
+	Data_Rect.top = Score_Y * scale;
+	Data_Rect.right = Data_Rect.left + Score_Width * scale;
+	Data_Rect.bottom = Data_Rect.top + Score_Height * scale;
 
-	Name_Rect.left = (Indicators_Panel_X_Pos + 5) * scale;
-	Name_Rect.top = (Indicators_Panel_Y_Pos + 5) * scale;
-	Name_Rect.right = Name_Rect.left + (Indicators_Panel_Width - 2 * 5) * scale;
-	Name_Rect.bottom = Name_Rect.top + 16 * scale;
-
-	Score_Rect.left = Name_Rect.left;
-	Score_Rect.top = Name_Rect.top + 22 * scale;
-	Score_Rect.right = Name_Rect.right;
-	Score_Rect.bottom = Name_Rect.bottom + 22 * scale;
-
-	Letter_F.Show_Full_Size();
+	Letter_P.Show_Full_Size();
+	Letter_G.Show_Full_Size();
 	Letter_M.Show_Full_Size();
-	Letter_Plus.Show_Full_Size();
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Begin_Movement()
 {
-	//  Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	// Заглушка, пока не используется
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Finish_Movement()
 {
-	//  Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	// Заглушка, пока не используется
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Advance(double max_speed)
 {
-	//  Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	// Заглушка, пока не используется
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 double AsInfo_Panel::Get_Speed()
 {
-	return 0.0;  //  Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	return 0.0;  // Заглушка, пока не используется
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Act()
 {
 	Floor_Indicator.Act();
 	Monster_Indicator.Act();
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Clear(HDC hdc, RECT &paint_area)
 {
-	//  Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	// Заглушка, т.к. очистка не нужна (индикатор при рисовании полностью себя перерисовывает)
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Draw(HDC hdc, RECT &paint_area)
 {
-	Draw_Logo(hdc, paint_area);
+	const int scale = AsConfig::Global_Scale;
+	const wchar_t *pop_str = L"POP";
+	const wchar_t *corn_str = L"CORN";
+	AString score_str(L"SCORE:");
+	RECT rect, intersection_rect;
 
-	// РўР°Р±Р»РёС†Р° СЃС‡РµС‚Р°
-	Draw_Indicators_Panel(hdc, paint_area);
+	// 1. Логотип
+	if (IntersectRect(&intersection_rect, &paint_area, &Logo_Rect) )
+	{
+		AsTools::Rect(hdc, 211, 5, 104, 100, AsConfig::Blue_Color);
 
-	// 3. РРЅРґРёРєР°С‚РѕСЂС‹
-	// 3.1 РџРѕР»
-	Letter_F.Draw(hdc, paint_area);
-	Floor_Indicator.Draw(hdc, paint_area);
+		SetBkMode(hdc, TRANSPARENT);
 
-	// 3.2 Р–РёР·РЅРё
-	Letter_Plus.Draw(hdc, paint_area);
-	Show_Extra_Lives(hdc);
+		// 1.1. "POP"
+		SelectObject(hdc, Logo_Pop_Font);
+		SetTextColor(hdc, AsConfig::BG_Color.Get_RGB() );
+		TextOut(hdc, (Logo_X_Pos + Shadow_X_Offset) * scale, (Logo_Y_Pos + Shadow_Y_Offset) * scale, pop_str, wcslen(pop_str) );
 
-	// 3.3 РњРѕРЅСЃС‚СЂ
-	Letter_M.Draw(hdc, paint_area);
-	Monster_Indicator.Draw(hdc, paint_area);
+		SetTextColor(hdc, AsConfig::Red_Color.Get_RGB() );
+		TextOut(hdc, Logo_X_Pos * scale, Logo_Y_Pos * scale, pop_str, wcslen(pop_str) );
+
+		// 1.2. "CORN"
+		SelectObject(hdc, Logo_Corn_Font);
+		SetTextColor(hdc, AsConfig::BG_Color.Get_RGB() );
+		TextOut(hdc, (Logo_X_Pos + Shadow_X_Offset - 5) * scale, (Logo_Y_Pos + Shadow_Y_Offset + 48) * scale, corn_str, wcslen(corn_str) );
+
+		SetTextColor(hdc, AsConfig::Red_Color.Get_RGB() );
+		TextOut(hdc, (Logo_X_Pos - 5) * scale, (Logo_Y_Pos + 48) * scale, corn_str, wcslen(corn_str) );
+	}
+
+
+	// 2. Таблица счёта
+	if (IntersectRect(&intersection_rect, &paint_area, &Data_Rect) )
+	{
+		// 2.1. Рамка
+		AsTools::Rect(hdc, Score_X, Score_Y, Score_Width, 2, *Dark_Red);
+		AsTools::Rect(hdc, Score_X, Score_Y + Score_Height - 2, Score_Width, 2, *Dark_Red);
+		AsTools::Rect(hdc, Score_X, Score_Y, 2, Score_Height, *Dark_Red);
+		AsTools::Rect(hdc, Score_X + Score_Width - 2, Score_Y, 2, Score_Height, *Dark_Red);
+
+		AsTools::Rect(hdc, Score_X + 2, Score_Y + 2, Score_Width - 4, Score_Height - 4, *Dark_Blue);
+
+		// 2.2. Бордюр
+		Highlight_Color->Select_Pen(hdc);
+		MoveToEx(hdc, (Score_X + 2) * scale, (Score_Y + Score_Height - 2) * scale, 0);
+		LineTo(hdc, (Score_X + 2) * scale, (Score_Y + 2) * scale);
+		LineTo(hdc, (Score_X + Score_Width - 2) * scale, (Score_Y + 2) * scale);
+
+		Shadow_Color->Select_Pen(hdc);
+		MoveToEx(hdc, (Score_X + Score_Width - 2) * scale, (Score_Y + 2) * scale, 0);
+		LineTo(hdc, (Score_X + Score_Width - 2) * scale, (Score_Y + Score_Height - 2) * scale);
+		LineTo(hdc, (Score_X + 2) * scale, (Score_Y + Score_Height - 2) * scale);
+
+		// 2.3. Имя игрока
+		rect.left = (Score_X + 5) * scale;
+		rect.top = (Score_Y + 5) * scale;
+		rect.right = rect.left + (Score_Width - 2 * 5) * scale;
+		rect.bottom = rect.top + 16 * scale;
+
+		Player_Name = L"COMPUTER";
+		Draw_String(hdc, rect, Player_Name, true);
+
+		// 3. Счёт игрока
+		rect.top += Score_Value_Offset * scale;
+		rect.bottom += Score_Value_Offset * scale;
+
+		score_str.Append(Score);
+
+		Draw_String(hdc, rect, score_str, false);
+
+		// 4. Буквы индикаторов
+		Letter_P.Draw(hdc, paint_area);
+		Letter_G.Draw(hdc, paint_area);
+		Letter_M.Draw(hdc, paint_area);
+
+		// 5. Индикаторы
+		Floor_Indicator.Draw(hdc, paint_area);
+		Monster_Indicator.Draw(hdc, paint_area);
+
+		// 6. Дополнительные жизни
+		Show_Extra_Lives(hdc);
+	}
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 bool AsInfo_Panel::Is_Finished()
 {
-	return false;  // Р—Р°РіР»СѓС€РєР°. Р­С‚РѕС‚ РјРµС‚РѕРґ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+	return false;  // Заглушка, пока не используется
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Init()
 {
-	LOGFONT log_font{}; 
+	LOGFONT log_font{};
 
 	log_font.lfHeight = -128;
 	log_font.lfWeight = 900;
@@ -121,10 +184,9 @@ void AsInfo_Panel::Init()
 	log_font.lfClipPrecision = 2;
 	log_font.lfQuality = 1;
 	log_font.lfPitchAndFamily = 34;
-
 	wcscpy_s(log_font.lfFaceName, L"Arial Black");
 
-	Logo_Pop_Font = CreateFontIndirect(&log_font); 
+	Logo_Pop_Font = CreateFontIndirect(&log_font);
 
 	log_font.lfHeight = -96;
 	Logo_Corn_Font = CreateFontIndirect(&log_font);
@@ -135,36 +197,39 @@ void AsInfo_Panel::Init()
 	log_font.lfClipPrecision = 2;
 	log_font.lfQuality = 1;
 	log_font.lfPitchAndFamily = 49;
-
 	wcscpy_s(log_font.lfFaceName, L"Consolas");
 
+	Name_Font = CreateFontIndirect(&log_font);
+
 	log_font.lfHeight = -44;
-	Player_Name_Font = CreateFontIndirect(&log_font); 
+	Score_Font = CreateFontIndirect(&log_font);
 
 	Shadow_Color = new AColor(AsConfig::BG_Color, AsConfig::Global_Scale);
 	Highlight_Color = new AColor(AsConfig::White_Color, AsConfig::Global_Scale);
+	Dark_Blue = new AColor(AsConfig::Blue_Color);
+	Dark_Red = new AColor(AsConfig::Red_Color);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Increase_Life_Count()
 {
 	if (Extra_Lives_Count < AsConfig::Max_Life_Count)
 	{
 		++Extra_Lives_Count;
-		AsTools::Invalidate_Rect(Indicators_Panel_Rect);
+		AsTools::Invalidate_Rect(Data_Rect);
 	}
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 bool AsInfo_Panel::Decrease_Life_Count()
 {
 	if (Extra_Lives_Count == 0)
 		return false;
 
 	--Extra_Lives_Count;
-	AsTools::Invalidate_Rect(Indicators_Panel_Rect);
-	
+	AsTools::Invalidate_Rect(Data_Rect);
+
 	return true;
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Update_Score(EScore_Event_Type event_type)
 {
 	switch (event_type)
@@ -182,32 +247,31 @@ void AsInfo_Panel::Update_Score(EScore_Event_Type event_type)
 		break;
 
 	default:
-		AsTools::Throw();
+		AsConfig::Throw();
 	}
 
-	AsTools::Invalidate_Rect(Score_Rect);
+	AsTools::Invalidate_Rect(Data_Rect);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Choose_Font()
 {
-	CHOOSEFONT cf{}; 
+	CHOOSEFONT cf{};
 	LOGFONT lf{};
 
-	cf.lStructSize = sizeof(CHOOSEFONT); 
-	cf.lpLogFont = &lf; 
-	cf.Flags = CF_SCREENFONTS; 
-	cf.nFontType = SCREEN_FONTTYPE; 
+	cf.lStructSize = sizeof(CHOOSEFONT);
+	cf.lpLogFont = &lf;
+	cf.Flags = CF_SCREENFONTS;
+	cf.nFontType = SCREEN_FONTTYPE;
 
-	ChooseFont(&cf); 
+	ChooseFont(&cf);
 }
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Show_Extra_Lives(HDC hdc)
 {
 	int i, j;
-
 	int lives_to_draw = Extra_Lives_Count;
 
-	AsTools::Round_Rect(hdc, Indicators_Panel_X_Pos + 28, Indicators_Panel_Y_Pos + 56, 55, 30, AsConfig::Floor_Indicator_Color);
+	AsTools::Rect(hdc, Score_X + 27, Score_Y + Indicator_Y_Offset, 56, 30, AsConfig::Teleport_Portal_Color);
 
 	for (j = 0; j < 3; j++)
 		for (i = 0; i < 4; i++)
@@ -215,55 +279,19 @@ void AsInfo_Panel::Show_Extra_Lives(HDC hdc)
 			if (lives_to_draw <= 0)
 				break;
 
-			Draw_Extra_Life(hdc, 27 + 6 + j * 16, 58 + i * 7);
+			Draw_Extra_Life(hdc, 27 + 6 + j * 16, 57 + i * 7);
+
 			--lives_to_draw;
 		}
 }
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_Logo(HDC hdc, RECT &paint_area)
-{
-	RECT intersection_rect;
-
-	if (! IntersectRect(&intersection_rect, &paint_area, &Logo_Rect) )
-		return;
-
-	const int scale = AsConfig::Global_Scale;
-	int pop_x_pos = (Logo_X_Pos - 8) * scale;
-	int pop_y_pos = Logo_Y_Pos * scale;
-	int corn_x_pos = (Logo_X_Pos - 13) * scale;
-	int corn_y_pos = pop_y_pos + 44 * scale;
-	const wchar_t *pop_str = L"POP";
-	const wchar_t *corn_str = L"CORN";
-
-	// 1. Р›РѕРіРѕС‚РёРї
-	AsTools::Rect(hdc, 212, 7, 102, 99, AsConfig::Blue_Color);
-
-	SetBkMode(hdc, TRANSPARENT);
-
-	// 1.1 РўРµРЅСЊ
-	SetTextColor(hdc, AsConfig::BG_Color.Get_RGB() );
-
-	SelectObject(hdc, Logo_Pop_Font);
-	TextOut(hdc, pop_x_pos + Shadow_X_Offset, pop_y_pos + Shadow_Y_Offset, pop_str, (int)wcslen(pop_str));
-	SelectObject(hdc, Logo_Corn_Font);
-	TextOut(hdc, corn_x_pos + Shadow_X_Offset, corn_y_pos + Shadow_Y_Offset, corn_str, (int)wcslen(corn_str));
-
-	// 1.2 РЎР°РјРё СЃРёРјРІРѕР»С‹
-	SetTextColor(hdc, AsConfig::Red_Color.Get_RGB() );
-
-	SelectObject(hdc, Logo_Pop_Font);
-	TextOut(hdc, pop_x_pos, pop_y_pos, pop_str, (int)wcslen(pop_str));
-	SelectObject(hdc, Logo_Corn_Font);
-	TextOut(hdc, corn_x_pos, corn_y_pos, corn_str, (int)wcslen(corn_str));
-}
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
 void AsInfo_Panel::Draw_Extra_Life(HDC hdc, int x_pos, int y_pos)
 {
 	const int scale = AsConfig::Global_Scale;
 	RECT rect;
 
-	rect.left = (Indicators_Panel_X_Pos + x_pos) * scale + 1;
-	rect.top = (Indicators_Panel_Y_Pos + y_pos) * scale;
+	rect.left = (Score_X + x_pos) * scale;
+	rect.top = (Score_Y + y_pos) * scale;
 	rect.right = rect.left + 4 * scale;
 	rect.bottom = rect.top + 5 * scale;
 
@@ -274,8 +302,8 @@ void AsInfo_Panel::Draw_Extra_Life(HDC hdc, int x_pos, int y_pos)
 
 	AsTools::Ellipse(hdc, rect, AsConfig::Red_Color);
 
-	rect.left = (Indicators_Panel_X_Pos + x_pos + 2) * scale + 1;
-	rect.top = (Indicators_Panel_Y_Pos + y_pos + 1) * scale;
+	rect.left = (Score_X + x_pos + 2) * scale;
+	rect.top = (Score_Y + y_pos + 1) * scale;
 	rect.right = rect.left + 8 * scale;
 	rect.bottom = rect.top + 3 * scale;
 
@@ -283,109 +311,36 @@ void AsInfo_Panel::Draw_Extra_Life(HDC hdc, int x_pos, int y_pos)
 	AsTools::Round_Rect(hdc, rect);
 }
 //------------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_Indicators_Panel(HDC hdc, RECT &paint_area)
+void AsInfo_Panel::Draw_String(HDC hdc, RECT &rect, AString &str, bool draw_name)
 {
-	RECT intersection_rect;
-
-	if (! IntersectRect(&intersection_rect, &paint_area, &Indicators_Panel_Rect) )
-		return;
-
+	int str_left_offset, str_top_offset;
 	const int scale = AsConfig::Global_Scale;
-	int distance_to_shadow = 4 * scale;
+	SIZE str_size;
 
-	// РџР°РЅРµР»СЊ
-	AsTools::Rect(hdc, Indicators_Panel_X_Pos, Indicators_Panel_Y_Pos, Indicators_Panel_Width, 2, AsConfig::Red_Color);
-	AsTools::Rect(hdc, Indicators_Panel_X_Pos, Indicators_Panel_Y_Pos, 2, Indicators_Panel_Heigth, AsConfig::Red_Color);
-	AsTools::Rect(hdc, Indicators_Panel_X_Pos, Indicators_Panel_Y_Pos + Indicators_Panel_Heigth - 2, Indicators_Panel_Width, 2, AsConfig::Red_Color);
-	AsTools::Rect(hdc, Indicators_Panel_X_Pos + Indicators_Panel_Width - 2, Indicators_Panel_Y_Pos, 2, Indicators_Panel_Heigth, AsConfig::Red_Color);
+	// 1. Выводим плашку фона
+	AsTools::Rect(hdc, rect, *Dark_Red);
 
-	// РЎРёРЅСЏСЏ РїР°РЅРµР»СЊ
-	Draw_Rect_With_Shadow(hdc, Indicators_Panel_Rect, AsConfig::Blue_Color);
-
-	// РџР°РЅРµР»СЊ СЃ РёРјРµРЅРµРј РёРіСЂРѕРєР°
-	Draw_Player_Name_Panel(hdc,paint_area);
-
-	// РџР°РЅРµР»СЊ СЃС‡РµС‚Р°
-	Draw_Score_Panel(hdc, paint_area);
-}
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_Player_Name_Panel(HDC hdc, RECT &paint_area)
-{
-	RECT intersection_rect;
-
-	if (! IntersectRect(&intersection_rect, &paint_area, &Name_Rect) )
-		return;
-
-	const int scale = AsConfig::Global_Scale;
-	int distance_to_shadow = 4 * scale;
-	RECT name_shadow_rect{};
-
-	Get_Shadow_Rect(Name_Rect, name_shadow_rect, distance_to_shadow);
-
-	Draw_Rect_With_Shadow(hdc, Name_Rect, AsConfig::Red_Color);
-
-	Draw_String(hdc, name_shadow_rect, Player_Name_Font, Player_Name, AsConfig::BG_Color);
-	Draw_String(hdc, Name_Rect, Player_Name_Font, Player_Name, AsConfig::Blue_Color);
-}
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_Score_Panel(HDC hdc, RECT &paint_area)
-{
-	RECT intersection_rect;
-
-	if (! IntersectRect(&intersection_rect, &paint_area, &Score_Rect) )
-		return;
-
-	const int scale = AsConfig::Global_Scale;
-	int distance_to_shadow = 4 * scale;
-	RECT score_shadow_rect{};
-	AString score_str( L"SCORE:");
-
-	Get_Shadow_Rect(Score_Rect, score_shadow_rect, distance_to_shadow);
-
-	Draw_Rect_With_Shadow(hdc, Score_Rect, AsConfig::Red_Color);
-
-	score_str.Append(Score);
-
-	Draw_String(hdc, score_shadow_rect, Player_Name_Font, score_str, AsConfig::BG_Color);
-	Draw_String(hdc, Score_Rect, Player_Name_Font, score_str, AsConfig::White_Color);
-}
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_String(HDC hdc, RECT &str_rect, HFONT &font, AString &str, const AColor &color)
-{
-	int str_x_pos, str_y_pos;
-	SIZE str_size{};
-
-	SelectObject(hdc, font);
-	SetTextColor(hdc, color.Get_RGB() );
+	// 2. Выводим строку
+	if (draw_name)
+		SelectObject(hdc, Name_Font);
+	else
+		SelectObject(hdc, Score_Font);
 
 	GetTextExtentPoint32(hdc, str.Get_Content(), str.Get_Length(), &str_size);
 
-	str_x_pos = str_rect.left + (str_rect.right - str_rect.left) / 2 - str_size.cx / 2;
-	str_y_pos = str_rect.top + (str_rect.bottom - str_rect.top) / 2 - str_size.cy / 2;
+	str_left_offset = rect.left + (rect.right - rect.left) / 2 - str_size.cx / 2;
+	str_top_offset = rect.top + (rect.bottom - rect.top) / 2 - str_size.cy / 2 - scale;
 
-	TextOut(hdc, str_x_pos, str_y_pos, str.Get_Content(), str.Get_Length() );
+	// 2.1. Сначала - тень
+	SetTextColor(hdc, AsConfig::BG_Color.Get_RGB() );
+	TextOut(hdc, str_left_offset + 2 * scale, str_top_offset + 2 * scale, str.Get_Content(), str.Get_Length() );
+
+	// 2.2. Потом - саму строку
+	if (draw_name)
+		SetTextColor(hdc, AsConfig::Blue_Color.Get_RGB() );
+	else
+		SetTextColor(hdc, AsConfig::White_Color.Get_RGB() );
+
+	TextOut(hdc, str_left_offset, str_top_offset, str.Get_Content(), str.Get_Length() );
 }
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Draw_Rect_With_Shadow(HDC hdc, RECT &panel_rect, const AColor &panel_color)
-{
-	AsTools::Rect(hdc, panel_rect, panel_color);
-
-	Shadow_Color->Select_Pen(hdc);
-	MoveToEx(hdc, panel_rect.right, panel_rect.top, 0);
-	LineTo(hdc, panel_rect.right, panel_rect.bottom);
-	LineTo(hdc, panel_rect.left, panel_rect.bottom);
-
-	Highlight_Color->Select_Pen(hdc);
-	LineTo(hdc, panel_rect.left, panel_rect.top);
-	LineTo(hdc, panel_rect.right, panel_rect.top);
-
-}
-//-----------------------------------------------------------------------------------------------------------
-void AsInfo_Panel::Get_Shadow_Rect(RECT &src_rect, RECT &dst_rect, int distance_to_shadow)
-{
-	dst_rect.left = src_rect.left + Shadow_X_Offset - distance_to_shadow;
-	dst_rect.top = src_rect.top + Shadow_Y_Offset - distance_to_shadow;
-	dst_rect.right = src_rect.right + Shadow_X_Offset - distance_to_shadow;
-	dst_rect.bottom = src_rect.bottom + Shadow_Y_Offset - distance_to_shadow;
-}
-//-----------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

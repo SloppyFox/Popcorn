@@ -9,25 +9,22 @@ public:
 	~AsPlatform_Expanding();
 	AsPlatform_Expanding(AsPlatform_State &platform_state);
 
-	void Init(AColor &inner_color, AColor &circle_color, AColor &highlight_color);
-	bool Act(double &x_pos, EPlatform_State &next_state);
-	void Draw_State(HDC hdc, double x_pos);
+	void Init(AColor &highlight_color, AColor &circle_color, AColor &inner_color);
+	bool Act(double &x_pos, EPlatform_State &next_state, bool &correct_pos);
+	void Draw_State(HDC hdc, double x);
 	void Draw_Circle_Highlight(HDC hdc, int x, int y);
 	void Reset();
 
-	double Curr_Expanding_Width;
+	double Expanding_Platform_Width;
 
 private:
-	void Draw_Expanding_Part(HDC hdc, int x, RECT &inner_rect, bool is_left);
+	void Draw_Expanding_Platform_Ball(HDC hdc, double x, bool is_left);
+	void Draw_Expanding_Truss(HDC hdc, RECT &inner_rect, bool is_left);
 
 	AsPlatform_State *Platform_State;
+	AColor *Highlight_Color, *Circle_Color, *Inner_Color;  // UNO
 	AColor *Truss_Color;
-	AColor *Inner_Color, *Circle_Color, *Highlight_Color; // UNO
 
-	int Expanding_Finalize_Timer_Tick;
-
-	static const double Max_Expanding_Width, Min_Expanding_Width, Expanding_Width_Step;
-
-	static const int Expanding_Inner_Width = 12;
+	static const double Max_Expanding_Platform_Width, Min_Expanding_Platform_Width, Expanding_Platform_Width_Step;
 };
 //------------------------------------------------------------------------------------------------------------

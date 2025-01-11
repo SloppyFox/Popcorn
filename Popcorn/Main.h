@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "resource.h"
 #include "Engine.h"
@@ -31,16 +31,16 @@ private:
 	BOOL Init_Instance(int command_show);
 	void On_Paint(HWND hwnd);
 
-	static const int Max_Load_String = 100;
+	static const int Max_String_Size = 100;
 
 	AsFrame_DC Frame_DC;
 	AsEngine Engine;
-	HINSTANCE Instance;  // current instance
-	WCHAR szTitle[Max_Load_String];  // The title bar text
-	WCHAR szWindowClass[Max_Load_String];  // the main window class name
+	HINSTANCE Instance;                                // current instance
+	WCHAR szTitle[Max_String_Size];                  // The title bar text  //!!! Заменить на AString
+	WCHAR szWindowClass[Max_String_Size];            // the main window class name  //!!! Заменить на AString
 
-	static LRESULT CALLBACK Window_Proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
-	static INT_PTR CALLBACK About(HWND hdlg, UINT message, WPARAM wparam, LPARAM lparam);
+	static LRESULT CALLBACK Window_Proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 	static AsMain_Window *Self;
 };
