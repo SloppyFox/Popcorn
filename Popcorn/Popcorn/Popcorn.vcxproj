@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{df606257-a8f2-420c-ab3d-608741061ca1}</ProjectGuid>
+    <ProjectGuid>{339bd0ff-030d-4f85-9065-f4c238d0097e}</ProjectGuid>
     <RootNamespace>Popcorn</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -127,59 +127,59 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Active_Brick.h" />
-    <ClInclude Include="Indicator.h" />
-    <ClInclude Include="Level_Data.h" />
-    <ClInclude Include="Monster_Set.h" />
-    <ClInclude Include="Ball.h" />
-    <ClInclude Include="Ball_Set.h" />
-    <ClInclude Include="Border.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="Engine.h" />
-    <ClInclude Include="Explosive_Ball.h" />
-    <ClInclude Include="Falling_Letter.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Active_Brick.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Ball.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Ball_Set.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Border.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Common.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Config.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Engine.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Explosive_Ball.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Falling_Letter.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Gate.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Indicator.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Info_Panel.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Laser_Beam.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Laser_Beam_Set.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Level.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Level_Data.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Main.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Monster.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Monster_Set.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Expanding.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Glue.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Laser.h" />
+    <ClInclude Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_State.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Gate.h" />
-    <ClInclude Include="Info_Panel.h" />
-    <ClInclude Include="Laser_Beam.h" />
-    <ClInclude Include="Laser_Beam_Set.h" />
-    <ClInclude Include="Level.h" />
-    <ClInclude Include="Main.h" />
-    <ClInclude Include="Monster.h" />
-    <ClInclude Include="Platform.h" />
-    <ClInclude Include="Platform_Expanding.h" />
-    <ClInclude Include="Platform_Glue.h" />
-    <ClInclude Include="Platform_Laser.h" />
-    <ClInclude Include="Platform_State.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Active_Brick.cpp" />
-    <ClCompile Include="Indicator.cpp" />
-    <ClCompile Include="Level_Data.cpp" />
-    <ClCompile Include="Monster_Set.cpp" />
-    <ClCompile Include="Ball.cpp" />
-    <ClCompile Include="Ball_Set.cpp" />
-    <ClCompile Include="Border.cpp" />
-    <ClCompile Include="Common.cpp" />
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="Engine.cpp" />
-    <ClCompile Include="Explosive_Ball.cpp" />
-    <ClCompile Include="Falling_Letter.cpp" />
-    <ClCompile Include="Gate.cpp" />
-    <ClCompile Include="Info_Panel.cpp" />
-    <ClCompile Include="Laser_Beam.cpp" />
-    <ClCompile Include="Laser_Beam_Set.cpp" />
-    <ClCompile Include="Level.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Monster.cpp" />
-    <ClCompile Include="Platform.cpp" />
-    <ClCompile Include="Platform_Expanding.cpp" />
-    <ClCompile Include="Platform_Glue.cpp" />
-    <ClCompile Include="Platform_Laser.cpp" />
-    <ClCompile Include="Platform_State.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Active_Brick.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Ball.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Ball_Set.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Border.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Common.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Config.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Engine.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Explosive_Ball.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Falling_Letter.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Gate.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Indicator.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Info_Panel.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Laser_Beam.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Laser_Beam_Set.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Level.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Level_Data.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Main.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Monster.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Monster_Set.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Expanding.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Glue.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_Laser.cpp" />
+    <ClCompile Include="..\..\..\..\..\01_Downloads\Popcorn_part_85_2\Popcorn\Popcorn\Platform_State.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Popcorn.rc" />
